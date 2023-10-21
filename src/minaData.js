@@ -154,9 +154,6 @@ class MinaData {
 
         return true
     }
-
-
-
 }
 
 
