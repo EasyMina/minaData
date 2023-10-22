@@ -8,13 +8,76 @@
     <script src="minaData.js"></script>
 </head>
 <body>
-    <script>
-
-    </script>
+    <label for="presets">Choose a preset</label>
+    <select id="presets">
+    </select>
+    <form id="hashForm">
+        <!-- Input-Feld für den Hash-Wert -->
+        <br><br>
+        
+        <!-- Submit-Button -->
+        <input type="submit" value="Submit">
+    </form>
+    <div>---</div>
     <div id="events"></div>
     <div>---</div>
     <div id="result"></div>
     <script>
+        let debug = true
+        const minaData = new MinaData( debug )
+        minaData.init( {
+            'chain': 'berkeley'
+        } )
+
+        const presets = document.getElementById( 'presets' )
+        minaData
+            .getPresets()
+            .forEach( a => {
+                const element = document.createElement( 'option' )
+                element.innerHTML = a
+                presets.appendChild( element )
+            } )
+
+        presets.addEventListener(
+            'change',
+            ( e ) => {
+                const key = document.getElementById( 'presets' ).value
+                const preset = minaData.getPreset( { key } )
+                console.log( preset )
+                
+                const form = document.getElementById( 'hashForm' )
+                form.innerHTML = ''
+                Object
+                    .entries( preset['input']['variables'] )
+                    .forEach( ( a, index ) => {
+                        const [ key, value ] = a
+                        const label = document.createElement( 'label' )
+                        label.setAttribute( 'for', key )
+                        label.textContent = `${key}: `
+                        const inputElement = document.createElement( 'input' )
+                        const tmp = [ 
+                            [ 'type', 'text'], [ 'id', key ], 
+                            [ 'name', key ], [ 'value', value['default'] ], 
+                            [ 'required', true ], /*[ 'pattern', value['regex']*/
+                        ]
+                            .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
+                        const lineBreak = document.createElement( 'br' )
+                        form.appendChild( label)
+                        form.appendChild( inputElement)
+                        form.appendChild( lineBreak )
+                        form.appendChild( lineBreak )
+                    } )
+                
+                const ipt = document.createElement( 'input' )
+                ipt.type = 'submit'
+                ipt.value = 'SUBMIT'
+                form.appendChild( ipt )
+            }
+        )
+        
+
+
+/*
         async function main() {
             let debug = true
             debug ? console.log( 'Mina Data' ) : ''
@@ -30,7 +93,7 @@
 
                     if( event.detail.indexOf( 'success') !== -1 ) {
                         const resultElement = document.getElementById( 'result' )
-                        resultElement.innerHTML += `<p>SUCCESS</p>`
+                        resultElement.innerHTML += `<p>${JSON.stringify( event.detail, null, 4 )}</p>`
                     }
                 }
             )
@@ -44,6 +107,7 @@
 
         main()
             .then( a => console.log( a ) )
+        */
     </script>
 </body>
 </html>

@@ -13,32 +13,36 @@ const server = http.createServer( ( req, res ) => {
             break
         case `.${folder}/minaData.js`:
             filePath = `./../src/minaData.js`
-            console.log( `>>> ${filePath}`)
             break
     }
 
+    console.log( `>> ${filePath}`)
 
-    const extname = String( path.extname( filePath ) ).toLowerCase()
-    const contentType = {
-        '.html': 'text/html',
-        '.js': 'text/javascript',
-        '.css': 'text/css'
-    }
-
-    fs.readFile( filePath, ( error, content ) => {
-        if( error ) {
-            if( error.code === 'ENOENT' ) {
-                res.writeHead( 404, { 'Content-Type': 'text/html' } )
-                res.end( '<h1>404 Not Found</h1>' )
-            } else {
-                res.writeHead( 500 )
-                res.end( `Server Error: ${error.code}` )
-            }
-        } else {
-            res.writeHead( 200, { 'Content-Type': contentType[ extname ] || 'application/octet-stream' } )
-            res.end( content, 'utf-8' )
+    if( filePath.indexOf( '?' ) !== -1 ) {
+        return true
+    } else {
+        const extname = String( path.extname( filePath ) ).toLowerCase()
+        const contentType = {
+            '.html': 'text/html',
+            '.js': 'text/javascript',
+            '.css': 'text/css'
         }
-    } )
+    
+        fs.readFile( filePath, ( error, content ) => {
+            if( error ) {
+                if( error.code === 'ENOENT' ) {
+                    res.writeHead( 404, { 'Content-Type': 'text/html' } )
+                    res.end( '<h1>404 Not Found</h1>' )
+                } else {
+                    res.writeHead( 500 )
+                    res.end( `Server Error: ${error.code}` )
+                }
+            } else {
+                res.writeHead( 200, { 'Content-Type': contentType[ extname ] || 'application/octet-stream' } )
+                res.end( content, 'utf-8' )
+            }
+        } )
+    }
 } )
 
 const port = process.env.PORT || 3000
