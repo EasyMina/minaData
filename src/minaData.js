@@ -1,8 +1,16 @@
-class MinaData {
+class MinaData extends EventTarget {
     #config
+    #debug
+    #state
 
-    constructor() {
+
+    constructor( debug=false ) {
+        super()
+        this.#debug = debug
         this.#config = {
+            'event': {
+                'name': 'status'
+            },
             'render': {
                 'frameInterval': 1000,
                 'delayBetweenRequests': 10000,
@@ -10,64 +18,71 @@ class MinaData {
             },
             'presets': {
                 'transactionByHash': {
-                    'key': 'transaction',
-                    'type': 'hash',
-                    'cmd': {
+                    'input': {
                         'query': "query q($hash: String!) {\n  transaction(query: {hash: $hash}) {\n    hash\n    dateTime\n    blockHeight\n    from\n    nonce\n    to\n    toAccount {\n      token\n    }\n  }\n}",
                         'variables': {
                             'hash': '5Jv6t2eyPZgGNWxct5kkhRwmF5jkEYNZ7JCe1iq6DMusvXGmJwiD'
-                        },
-                        'operationName': 'q'
                         }
+                    },
+                    'output': {
+                        'key': 'transaction',
+                        'type': 'hash'
+                    }
                 },
+/*
                 'latestBlockHeight': {
-                    'key': 'block',
-                    'type': 'hash',
-                    'cmd': {
+                    'input': {
                         'query': "query q($blockHeight_lt: Int) {\n  block(query: {blockHeight_lt: $blockHeight_lt}) {\n    blockHeight\n    dateTime\n  }\n}",
                         'variables': {
                             'blockHeight_lt': 999999999 
-                        },
-                        'operationName': 'q'
+                        }
+                    },
+                    'output': {
+                        'key': 'block',
+                        'type': 'hash'
                     }
                 },
                 'latestBlockHeights': {
-                    'key': 'blocks',
-                    'type': 'array',
-                    'cmd': {
+                    'input': {
                         'query': "query q($limit: Int) {\n  blocks(limit: $limit, sortBy: BLOCKHEIGHT_DESC) {\n    blockHeight\n    protocolState {\n      consensusState {\n        slotSinceGenesis\n        slot\n      }\n    }\n    dateTime\n    receivedTime\n  }\n}",
                         'variables': {
                             'limit': 10
-                        },
-                        'operationName': 'q'
                         }
+                    },
+                    'output': {
+                        'key': 'blocks',
+                        'type': 'array'
+                    }
                 },
                 'latestEventsFromContract': {
-                    'key': 'events',
-                    'type': 'array',
-                    'cmd': {
+                    'input': {
                         'query': "query q($limit: Int!, $blockHeight_lt: Int!, $creator: String!) {\n events(query: {blockHeight_lt: $blockHeight_lt, blockStateHash: {creator: $creator}}, sortBy: BLOCKHEIGHT_DESC, limit: $limit) {\n blockHeight\n dateTime\n event\n blockStateHash {\n creatorAccount {\n publicKey\n }\n }\n }\n}",
                         'variables': {
                             'limit': 10,
                             'blockHeight_lt': 999999999,
                             'creator': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM'
-                        },
-                        'operationName': 'q'
+                        }
+                    },
+                    'output': {
+                        'key': 'events',
+                        'type': 'array'
                     }
                 },
                 'latestEventsFromContractByBlockHeight': {
-                    'key': 'events',
-                    'type': 'array',
-                    'cmd': {
+                    'input': {
                         'query': "query q($limit: Int!, $blockHeight: Int!, $publicKey: String!) {\n events(limit: $limit, query: {blockHeight: $blockHeight, blockStateHash: {creatorAccount: {publicKey: $publicKey}}}) {\n blockHeight\n dateTime\n event\n blockStateHash {\n creatorAccount {\n publicKey\n }\n }\n }\n}",
                         'variables': {
                             'limit': 10, 
                             'blockHeight': 2785, 
                             'publicKey': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM' 
-                        },
-                        'operationName': 'q'
+                        }
+                    },
+                    'output': {
+                        'key': 'events',
+                        'type': 'array'
                     }
                 }
+*/
             },
             'network': {
                 'use': 'berkeley', 
@@ -88,15 +103,75 @@ class MinaData {
                 }
             }
         }
+    }
+
+
+    init() {
+        this.#state = {
+            'nonce': 0
+        }
 
         return true
     }
 
 
-    payload( { cmd, vars={} } ) {
+    getPresets() {
+        // console.log( Object.keys( this.#config['presets'] ) )
+        return Object.keys( this.#config['presets'] )
+    }
+
+
+    async getData() {
+        const eventId = `#${this.#state['nonce']} :`
+        this.#state['nonce']++
+
+        this.#debug ? console.log( '> Get Data' ) : ''
+        let preset = this.getPresets()[ 0 ]
+        let payload = this.#preparePayload( { 'cmd': preset } )
+
+        //console.log( `>>> ${payload['fetch']['data']}` )
+
+
+        this.#dispatchCustomEvent( `${eventId} started` )
+
+        const startTime = performance.now()
+        const response = await fetch(
+            payload['fetch']['url'], 
+            {
+                'method': payload['fetch']['method'],
+                'headers': payload['fetch']['headers'],
+                'body': payload['fetch']['data']
+            }
+        )  
+        const endTime = performance.now()
+        const executionTime = endTime - startTime
+
+        this.#dispatchCustomEvent( `${eventId} received (${executionTime} ms)` )
+
+        const json = await response.json()
+        this.#dispatchCustomEvent( `${eventId} success!` )
+
+
+        return json
+    }
+
+
+    #dispatchCustomEvent( eventData ) {
+        const event = new CustomEvent(
+            this.#config['event']['name'],
+            { 'detail': eventData }
+        )
+        this.dispatchEvent( event )
+        return true
+    }
+
+
+    #preparePayload( { cmd, vars={} } ) {
+        this.#debug ? console.log( '' ) : ''
+
         const network = this.#config['network']['use']
         const url = this.#config['network'][ network ]['graphQl']
-        const data = { ...this.#config['presets'][ cmd ]['cmd'] }
+        const data = { ...this.#config['presets'][ cmd ]['input'] }
 
         Object
             .entries( vars )
@@ -121,49 +196,8 @@ class MinaData {
                 'data': JSON.stringify( data )
             }
         }
-
-        console.log( `>>> ${JSON.stringify( struct, null, 4 ) }` )
+        // console.log( `>>> ${JSON.stringify( struct, null, 4 ) }` )
 
         return struct
     }
-
-    getPresets() {
-        console.log( Object.keys( this.#config['presets'] ) )
-        return Object.keys( this.#config['presets'] )
-    }
-
-
-    async getData() {
-        console.log( '111' )
-        let preset = this.getPresets()[ 3 ]
-        let payload = this.payload( { 'cmd': preset } )
-
-    
-        const response = await fetch(
-            payload['fetch']['url'], 
-            {
-                'method': payload['fetch']['method'],
-                'headers': payload['fetch']['headers'],
-                'body': payload['fetch']['data']
-            }
-        )
-
-        const json = await response.json()
-
-        console.log( `response: ${JSON.stringify( json ) }`)
-
-        return true
-    }
 }
-
-
-async function main() {
-    console.log( 'AA' )
-    const minaData = new MinaData()
-    await minaData.getData()
-
-    return true
-}
-
-main()
-    .then( a => console.log( a ) )

@@ -11,22 +11,39 @@
     <script>
 
     </script>
-    <div class="container">
-        <h1>Mina Data</h1>
-        <div class="account-info">
-            <div class="info-item">
-                <h2>a</h2>
-                <p>1</p>
-            </div>
-            <div class="info-item">
-                <h2>b</h2>
-                <p>1</p>
-            </div>
-            <div class="info-item">
-                <h2>c</h2>
-                <p>3</p>
-            </div>
-        </div>
-    </div>
+    <div id="events"></div>
+    <div>---</div>
+    <div id="result"></div>
+    <script>
+        async function main() {
+            let debug = true
+            debug ? console.log( 'Mina Data' ) : ''
+            const minaData = new MinaData( debug )
+            minaData.init()
+
+            minaData.addEventListener(
+                'status', 
+                ( event ) => { 
+                    console.log( `Event: ${event.detail}` ) 
+                    const eventElement = document.getElementById( 'events' )
+                    eventElement.innerHTML += `<p>Event: ${event.detail}</p>`
+
+                    if( event.detail.indexOf( 'success') !== -1 ) {
+                        const resultElement = document.getElementById( 'result' )
+                        resultElement.innerHTML += `<p>SUCCESS</p>`
+                    }
+                }
+            )
+            
+            minaData.getData()
+            // minaData.getData()
+            // minaData.getData()
+
+            return true
+        }
+
+        main()
+            .then( a => console.log( a ) )
+    </script>
 </body>
 </html>
