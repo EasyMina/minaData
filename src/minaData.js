@@ -21,7 +21,11 @@ class MinaData extends EventTarget {
                     'input': {
                         'query': "query q($hash: String!) {\n  transaction(query: {hash: $hash}) {\n    hash\n    dateTime\n    blockHeight\n    from\n    nonce\n    to\n    toAccount {\n      token\n    }\n  }\n}",
                         'variables': {
-                            'hash': '5Jv6t2eyPZgGNWxct5kkhRwmF5jkEYNZ7JCe1iq6DMusvXGmJwiD'
+                            'hash': {
+                                'default': '5Jv6t2eyPZgGNWxct5kkhRwmF5jkEYNZ7JCe1iq6DMusvXGmJwiD',
+                                'description': 'transaction hash',
+                                'regex': /^[a-zA-Z0-9]{64}$/
+                            }
                         }
                     },
                     'output': {
@@ -29,12 +33,15 @@ class MinaData extends EventTarget {
                         'type': 'hash'
                     }
                 },
-/*
                 'latestBlockHeight': {
                     'input': {
                         'query': "query q($blockHeight_lt: Int) {\n  block(query: {blockHeight_lt: $blockHeight_lt}) {\n    blockHeight\n    dateTime\n  }\n}",
                         'variables': {
-                            'blockHeight_lt': 999999999 
+                            'blockHeight_lt': {
+                                'default': 999999999,
+                                'description': 'highest block',
+                                'regex': /^(0|[1-9]\d{0,8})$/
+                            }
                         }
                     },
                     'output': {
@@ -46,7 +53,11 @@ class MinaData extends EventTarget {
                     'input': {
                         'query': "query q($limit: Int) {\n  blocks(limit: $limit, sortBy: BLOCKHEIGHT_DESC) {\n    blockHeight\n    protocolState {\n      consensusState {\n        slotSinceGenesis\n        slot\n      }\n    }\n    dateTime\n    receivedTime\n  }\n}",
                         'variables': {
-                            'limit': 10
+                            'limit': {
+                                'default': 10,
+                                'description': 'limit',
+                                'regex': /[0-9]{0,2}/
+                            }
                         }
                     },
                     'output': {
@@ -54,13 +65,26 @@ class MinaData extends EventTarget {
                         'type': 'array'
                     }
                 },
+                                
                 'latestEventsFromContract': {
                     'input': {
                         'query': "query q($limit: Int!, $blockHeight_lt: Int!, $creator: String!) {\n events(query: {blockHeight_lt: $blockHeight_lt, blockStateHash: {creator: $creator}}, sortBy: BLOCKHEIGHT_DESC, limit: $limit) {\n blockHeight\n dateTime\n event\n blockStateHash {\n creatorAccount {\n publicKey\n }\n }\n }\n}",
                         'variables': {
-                            'limit': 10,
-                            'blockHeight_lt': 999999999,
-                            'creator': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM'
+                            'limit': {
+                                'default': 10,
+                                'description': 'limit', 
+                                'regex': /[0-9]{0,2}/
+                            },
+                            'blockHeight_lt': {
+                                'default': 999999999,
+                                'description': 'highest block',
+                                'regex': /^(0|[1-9]\d{0,8})$/
+                            },
+                            'creator': {
+                                'default': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM',
+                                'description': 'btc address',
+                                'regex': /^(B[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{42,44})$/
+                            }
                         }
                     },
                     'output': {
@@ -68,6 +92,7 @@ class MinaData extends EventTarget {
                         'type': 'array'
                     }
                 },
+                /*
                 'latestEventsFromContractByBlockHeight': {
                     'input': {
                         'query': "query q($limit: Int!, $blockHeight: Int!, $publicKey: String!) {\n events(limit: $limit, query: {blockHeight: $blockHeight, blockStateHash: {creatorAccount: {publicKey: $publicKey}}}) {\n blockHeight\n dateTime\n event\n blockStateHash {\n creatorAccount {\n publicKey\n }\n }\n }\n}",
@@ -121,12 +146,17 @@ class MinaData extends EventTarget {
     }
 
 
-    async getData() {
+    getPreset( { key } ) {
+        return this.#config['presets'][ key ]
+    }
+
+
+    async getData( { preset, vars } ) {
         const eventId = `#${this.#state['nonce']} :`
         this.#state['nonce']++
 
         this.#debug ? console.log( '> Get Data' ) : ''
-        let preset = this.getPresets()[ 0 ]
+        // let preset = this.getPresets()[ 0 ]
         let payload = this.#preparePayload( { 'cmd': preset } )
 
         //console.log( `>>> ${payload['fetch']['data']}` )

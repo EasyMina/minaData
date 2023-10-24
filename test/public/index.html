@@ -18,63 +18,72 @@
         <!-- Submit-Button -->
         <input type="submit" value="Submit">
     </form>
-    <div>---</div>
-    <div id="events"></div>
+    <div id="events"><h2>Events</h2></div>
     <div>---</div>
     <div id="result"></div>
     <script>
+        function addForm( { key } ) {
+            const preset = minaData.getPreset( { key } )
+            console.log( preset )
+            
+            const form = document.getElementById( 'hashForm' )
+            form.innerHTML = ''
+            Object
+                .entries( preset['input']['variables'] )
+                .forEach( ( a, index ) => {
+                    const [ key, value ] = a
+                    const label = document.createElement( 'label' )
+                    label.setAttribute( 'for', key )
+                    label.textContent = `${key}: `
+                    const inputElement = document.createElement( 'input' )
+                    const tmp = [ 
+                        [ 'type', 'text'], [ 'id', key ], 
+                        [ 'name', key ], [ 'value', value['default'] ], 
+                        [ 'required', true ], /*[ 'pattern', value['regex']*/
+                    ]
+                        .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
+                    const lineBreak = document.createElement( 'br' )
+                    form.appendChild( label)
+                    form.appendChild( inputElement)
+                    form.appendChild( lineBreak )
+                    form.appendChild( lineBreak )
+                } )
+            
+            const ipt = document.createElement( 'input' )
+            ipt.type = 'submit'
+            ipt.value = 'SUBMIT'
+            form.appendChild( ipt )
+        }
+
+
+        function addUserInterface() {
+            const presets = document.getElementById( 'presets' )
+            minaData
+                .getPresets()
+                .forEach( a => {
+                    const element = document.createElement( 'option' )
+                    element.innerHTML = a
+                    presets.appendChild( element )
+                } )
+
+            presets.addEventListener(
+                'change',
+                ( e ) => {
+                    const key = document.getElementById( 'presets' ).value
+                    addForm( { key } )
+                }
+            )
+        }
+
+
         let debug = true
         const minaData = new MinaData( debug )
         minaData.init( {
             'chain': 'berkeley'
         } )
 
-        const presets = document.getElementById( 'presets' )
-        minaData
-            .getPresets()
-            .forEach( a => {
-                const element = document.createElement( 'option' )
-                element.innerHTML = a
-                presets.appendChild( element )
-            } )
-
-        presets.addEventListener(
-            'change',
-            ( e ) => {
-                const key = document.getElementById( 'presets' ).value
-                const preset = minaData.getPreset( { key } )
-                console.log( preset )
-                
-                const form = document.getElementById( 'hashForm' )
-                form.innerHTML = ''
-                Object
-                    .entries( preset['input']['variables'] )
-                    .forEach( ( a, index ) => {
-                        const [ key, value ] = a
-                        const label = document.createElement( 'label' )
-                        label.setAttribute( 'for', key )
-                        label.textContent = `${key}: `
-                        const inputElement = document.createElement( 'input' )
-                        const tmp = [ 
-                            [ 'type', 'text'], [ 'id', key ], 
-                            [ 'name', key ], [ 'value', value['default'] ], 
-                            [ 'required', true ], /*[ 'pattern', value['regex']*/
-                        ]
-                            .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
-                        const lineBreak = document.createElement( 'br' )
-                        form.appendChild( label)
-                        form.appendChild( inputElement)
-                        form.appendChild( lineBreak )
-                        form.appendChild( lineBreak )
-                    } )
-                
-                const ipt = document.createElement( 'input' )
-                ipt.type = 'submit'
-                ipt.value = 'SUBMIT'
-                form.appendChild( ipt )
-            }
-        )
-        
+        addUserInterface( minaData )
+        addForm( { 'key': 'transactionByHash'} )
 
 
 /*
