@@ -157,7 +157,7 @@ class MinaData extends EventTarget {
         if( this.getPresets().includes( preset ) ) {
             const ps = this.getPreset( { 'key': preset } )
             console.log( 'ps', ps )
-            
+
 
         } else {
             messages.push( `preset: ${preset} does not exist` )
@@ -202,7 +202,7 @@ class MinaData extends EventTarget {
         this.#dispatchCustomEvent( {
             'eventId': eventId,
             'preset': preset,
-            'status': `received (${executionTime})`,
+            'status': `received (${Math.floor( executionTime ) } ms)`,
             'data': null
         } )
 
