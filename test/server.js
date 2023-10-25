@@ -18,16 +18,17 @@ const server = http.createServer( ( req, res ) => {
 
     console.log( `>> ${filePath}`)
 
+    const extname = String( path.extname( filePath ) ).toLowerCase()
+    const contentType = {
+        '.html': 'text/html',
+        '.js': 'text/javascript',
+        '.css': 'text/css'
+    }
+
     if( filePath.indexOf( '?' ) !== -1 ) {
+        res.writeHead( 200, { 'Content-Type': contentType['.html'] } )
         return true
     } else {
-        const extname = String( path.extname( filePath ) ).toLowerCase()
-        const contentType = {
-            '.html': 'text/html',
-            '.js': 'text/javascript',
-            '.css': 'text/css'
-        }
-    
         fs.readFile( filePath, ( error, content ) => {
             if( error ) {
                 if( error.code === 'ENOENT' ) {

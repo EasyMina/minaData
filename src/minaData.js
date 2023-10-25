@@ -151,18 +151,40 @@ class MinaData extends EventTarget {
     }
 
 
+    #validateInput( { preset, vars } ) {
+        let messages = []
+
+        if( this.getPresets().includes( preset ) ) {
+            const ps = this.getPreset( { 'key': preset } )
+            console.log( 'ps', ps )
+            
+
+        } else {
+            messages.push( `preset: ${preset} does not exist` )
+        }
+
+        return messages
+    }
+
+
     async getData( { preset, vars } ) {
-        const eventId = `#${this.#state['nonce']} :`
+        const messages = this.#validateInput( { preset, vars } )
+        if( messages.length !== 0 ) {
+            messages.forEach( msg => console.log( msg ) )
+            return true
+        }
+
+
+        const eventId = this.#state['nonce']
         this.#state['nonce']++
 
-        this.#debug ? console.log( '> Get Data' ) : ''
-        // let preset = this.getPresets()[ 0 ]
-        let payload = this.#preparePayload( { 'cmd': preset } )
-
-        //console.log( `>>> ${payload['fetch']['data']}` )
-
-
-        this.#dispatchCustomEvent( `${eventId} started` )
+        let payload = this.#preparePayload( { 'cmd': preset, vars } )
+        this.#dispatchCustomEvent( {
+            'eventId': eventId,
+            'preset': preset,
+            'status': 'started',
+            'data': null
+        } )
 
         const startTime = performance.now()
         const response = await fetch(
@@ -172,24 +194,35 @@ class MinaData extends EventTarget {
                 'headers': payload['fetch']['headers'],
                 'body': payload['fetch']['data']
             }
-        )  
+        )
+
         const endTime = performance.now()
         const executionTime = endTime - startTime
 
-        this.#dispatchCustomEvent( `${eventId} received (${executionTime} ms)` )
+        this.#dispatchCustomEvent( {
+            'eventId': eventId,
+            'preset': preset,
+            'status': `received (${executionTime})`,
+            'data': null
+        } )
 
         const json = await response.json()
-        this.#dispatchCustomEvent( `${eventId} success!` )
+        this.#dispatchCustomEvent( {
+            'eventId': eventId,
+            'preset': preset,
+            'status': `success!`,
+            'data': JSON.stringify( json )
+        } )
 
 
-        return json
+        return [ eventId, json ]
     }
 
 
-    #dispatchCustomEvent( eventData ) {
+    #dispatchCustomEvent( { eventId, preset, status, data } ) {
         const event = new CustomEvent(
             this.#config['event']['name'],
-            { 'detail': eventData }
+            { 'detail': { eventId, preset, status, data } }
         )
         this.dispatchEvent( event )
         return true
@@ -197,6 +230,9 @@ class MinaData extends EventTarget {
 
 
     #preparePayload( { cmd, vars={} } ) {
+        console.log( 'INSIDE >>>' )
+        console.log( 'vars', vars )
+
         this.#debug ? console.log( '' ) : ''
 
         const network = this.#config['network']['use']
@@ -226,6 +262,7 @@ class MinaData extends EventTarget {
                 'data': JSON.stringify( data )
             }
         }
+
         // console.log( `>>> ${JSON.stringify( struct, null, 4 ) }` )
 
         return struct

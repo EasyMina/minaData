@@ -18,105 +18,159 @@
         <!-- Submit-Button -->
         <input type="submit" value="Submit">
     </form>
-    <div id="events"><h2>Events</h2></div>
-    <div>---</div>
-    <div id="result"></div>
+
+    <div>Events</div>
+    <div class="table-container">
+        <table id="myTable">
+            <thead>
+            <tr>
+                <th>EventId</th>
+                <th>Preset</th>
+                <th>Status</th>
+                <th>Data</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
     <script>
-        function addForm( { key } ) {
-            const preset = minaData.getPreset( { key } )
-            console.log( preset )
-            
-            const form = document.getElementById( 'hashForm' )
-            form.innerHTML = ''
-            Object
-                .entries( preset['input']['variables'] )
-                .forEach( ( a, index ) => {
-                    const [ key, value ] = a
-                    const label = document.createElement( 'label' )
-                    label.setAttribute( 'for', key )
-                    label.textContent = `${key}: `
-                    const inputElement = document.createElement( 'input' )
-                    const tmp = [ 
-                        [ 'type', 'text'], [ 'id', key ], 
-                        [ 'name', key ], [ 'value', value['default'] ], 
-                        [ 'required', true ], /*[ 'pattern', value['regex']*/
-                    ]
-                        .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
-                    const lineBreak = document.createElement( 'br' )
-                    form.appendChild( label)
-                    form.appendChild( inputElement)
-                    form.appendChild( lineBreak )
-                    form.appendChild( lineBreak )
+
+        class UserInterface {
+            #config
+
+
+            constructor() {
+                this.#config = {}
+            }
+
+
+            init() {
+                this.#addUserInterface()
+                this.#addForm( { 'key': 'transactionByHash'} )
+                this.#addSubmitButton()
+                return true
+            }
+
+
+            #addForm( { key } ) {
+                const preset = minaData.getPreset( { key } )
+                console.log( preset )
+                
+                const form = document.getElementById( 'hashForm' )
+                form.innerHTML = ''
+                Object
+                    .entries( preset['input']['variables'] )
+                    .forEach( ( a, index ) => {
+                        const [ key, value ] = a
+                        const label = document.createElement( 'label' )
+                        label.setAttribute( 'for', key )
+                        label.textContent = `${key}: `
+                        const inputElement = document.createElement( 'input' )
+                        const tmp = [ 
+                            [ 'type', 'text'], [ 'id', key ], 
+                            [ 'name', key ], [ 'value', value['default'] ], 
+                            [ 'required', true ], /*[ 'pattern', value['regex']*/
+                        ]
+                            .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
+                        const lineBreak = document.createElement( 'br' )
+                        form.appendChild( label)
+                        form.appendChild( inputElement)
+                        form.appendChild( lineBreak )
+                        form.appendChild( lineBreak )
+                    } )
+                
+                const ipt = document.createElement( 'input' )
+                ipt.type = 'submit'
+                ipt.value = 'SUBMIT'
+                form.appendChild( ipt )
+            }
+
+
+            #addUserInterface() {
+                const presets = document.getElementById( 'presets' )
+                minaData
+                    .getPresets()
+                    .forEach( a => {
+                        const element = document.createElement( 'option' )
+                        element.innerHTML = a
+                        presets.appendChild( element )
+                    } )
+
+                presets
+                    .addEventListener(
+                        'change',
+                        ( e ) => {
+                            const key = document.getElementById( 'presets' ).value
+                            this.#addForm( { key } )
+                        }
+                    )
+            }
+
+
+            #addSubmitButton() {
+                var form = document.getElementById( 'hashForm' )
+                form.addEventListener(
+                    'submit', 
+                    ( event ) => {
+                        // Prevent the default form submission behavior, which would reload the page
+                        event.preventDefault()
+
+                        var textInputs = form.querySelectorAll( 'input[type="text"]' )
+                        const vars = {}
+                        textInputs
+                            .forEach( 
+                                ( input, index ) => { 
+                                    console.log( '>>>>>', input)
+                                    console.log( 'AA', input.value )
+                                    console.log( 'BB', input.id )
+                                    vars[ input.id ] = input.value 
+                                }
+                            )
+
+                        const selectElement = document.getElementById( 'presets' )
+                        const key = selectElement.options[ selectElement.selectedIndex ].value
+
+                        minaData.getData( { 'preset': key, vars } )
                 } )
-            
-            const ipt = document.createElement( 'input' )
-            ipt.type = 'submit'
-            ipt.value = 'SUBMIT'
-            form.appendChild( ipt )
+            }
+
+
+            addEventRow( { columns } ) {
+                var newRow = document.createElement( 'tr' )
+                Object
+                    .entries( columns )
+                    .forEach( ( a ) => {
+                        const [ key, value ] = a
+                        const cell = document.createElement( 'td' )
+                        cell.textContent = value
+                        newRow.appendChild( cell )
+                    } )
+
+                const table = document.getElementById( 'myTable' )
+
+                const firstRow = table.querySelector('tbody tr:first-child')
+                table.querySelector('tbody').insertBefore(newRow, firstRow);
+
+                //table.appendChild( newRow )
+            }
         }
-
-
-        function addUserInterface() {
-            const presets = document.getElementById( 'presets' )
-            minaData
-                .getPresets()
-                .forEach( a => {
-                    const element = document.createElement( 'option' )
-                    element.innerHTML = a
-                    presets.appendChild( element )
-                } )
-
-            presets.addEventListener(
-                'change',
-                ( e ) => {
-                    const key = document.getElementById( 'presets' ).value
-                    addForm( { key } )
-                }
-            )
-        }
-
 
         let debug = true
-        const minaData = new MinaData( debug )
+        var minaData = new MinaData( debug )
         minaData.init( {
             'chain': 'berkeley'
         } )
 
-        addUserInterface( minaData )
-        addForm( { 'key': 'transactionByHash'} )
+        const userInterface = new UserInterface()
+        userInterface.init()
 
-
-/*
-        async function main() {
-            let debug = true
-            debug ? console.log( 'Mina Data' ) : ''
-            const minaData = new MinaData( debug )
-            minaData.init()
-
-            minaData.addEventListener(
+        minaData.addEventListener(
                 'status', 
                 ( event ) => { 
-                    console.log( `Event: ${event.detail}` ) 
-                    const eventElement = document.getElementById( 'events' )
-                    eventElement.innerHTML += `<p>Event: ${event.detail}</p>`
-
-                    if( event.detail.indexOf( 'success') !== -1 ) {
-                        const resultElement = document.getElementById( 'result' )
-                        resultElement.innerHTML += `<p>${JSON.stringify( event.detail, null, 4 )}</p>`
-                    }
+                    userInterface.addEventRow( { 'columns': event.detail } )
                 }
             )
-            
-            minaData.getData()
-            // minaData.getData()
-            // minaData.getData()
 
-            return true
-        }
-
-        main()
-            .then( a => console.log( a ) )
-        */
     </script>
 </body>
 </html>
