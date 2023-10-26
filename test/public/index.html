@@ -19,7 +19,7 @@
         <input type="submit" value="Submit">
     </form>
 
-    <div>Events</div>
+    <h1>Events</h1>
     <div class="table-container">
         <table id="myTable">
             <thead>
@@ -54,8 +54,6 @@
 
             #addForm( { key } ) {
                 const preset = minaData.getPreset( { key } )
-                console.log( preset )
-                
                 const form = document.getElementById( 'hashForm' )
                 form.innerHTML = ''
                 Object
@@ -116,21 +114,18 @@
                         event.preventDefault()
 
                         var textInputs = form.querySelectorAll( 'input[type="text"]' )
-                        const vars = {}
+                        const userVars = {}
                         textInputs
                             .forEach( 
                                 ( input, index ) => { 
-                                    console.log( '>>>>>', input)
-                                    console.log( 'AA', input.value )
-                                    console.log( 'BB', input.id )
-                                    vars[ input.id ] = input.value 
+                                    userVars[ input.id ] = input.value 
                                 }
                             )
 
                         const selectElement = document.getElementById( 'presets' )
                         const key = selectElement.options[ selectElement.selectedIndex ].value
 
-                        minaData.getData( { 'preset': key, vars } )
+                        minaData.getData( { 'preset': key, userVars } )
                 } )
             }
 

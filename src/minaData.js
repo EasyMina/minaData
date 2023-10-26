@@ -22,9 +22,10 @@ class MinaData extends EventTarget {
                         'query': "query q($hash: String!) {\n  transaction(query: {hash: $hash}) {\n    hash\n    dateTime\n    blockHeight\n    from\n    nonce\n    to\n    toAccount {\n      token\n    }\n  }\n}",
                         'variables': {
                             'hash': {
-                                'default': '5Jv6t2eyPZgGNWxct5kkhRwmF5jkEYNZ7JCe1iq6DMusvXGmJwiD',
+                                'default': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1',
+                                'type': 'string',
                                 'description': 'transaction hash',
-                                'regex': /^[a-zA-Z0-9]{64}$/
+                                'regex': /^[a-zA-Z0-9]{52}$/
                             }
                         }
                     },
@@ -39,6 +40,7 @@ class MinaData extends EventTarget {
                         'variables': {
                             'blockHeight_lt': {
                                 'default': 999999999,
+                                'type': 'number',
                                 'description': 'highest block',
                                 'regex': /^(0|[1-9]\d{0,8})$/
                             }
@@ -55,6 +57,7 @@ class MinaData extends EventTarget {
                         'variables': {
                             'limit': {
                                 'default': 10,
+                                'type': 'number',
                                 'description': 'limit',
                                 'regex': /[0-9]{0,2}/
                             }
@@ -72,18 +75,21 @@ class MinaData extends EventTarget {
                         'variables': {
                             'limit': {
                                 'default': 10,
+                                'type': 'number',
                                 'description': 'limit', 
                                 'regex': /[0-9]{0,2}/
                             },
                             'blockHeight_lt': {
                                 'default': 999999999,
+                                'type': 'number',
                                 'description': 'highest block',
                                 'regex': /^(0|[1-9]\d{0,8})$/
                             },
                             'creator': {
                                 'default': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM',
+                                'type': 'string',
                                 'description': 'btc address',
-                                'regex': /^(B[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{42,44})$/
+                                'regex': /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/
                             }
                         }
                     },
@@ -133,7 +139,8 @@ class MinaData extends EventTarget {
 
     init() {
         this.#state = {
-            'nonce': 0
+            'nonce': 0,
+            'subgroups': {}
         }
 
         return true
@@ -151,34 +158,75 @@ class MinaData extends EventTarget {
     }
 
 
-    #validateInput( { preset, vars } ) {
+    #validateInput( { preset, userVars, subgroup } ) {
         let messages = []
 
         if( this.getPresets().includes( preset ) ) {
             const ps = this.getPreset( { 'key': preset } )
-            console.log( 'ps', ps )
-
-
+            console.log( 'ps', ps['input']['variables'] )
         } else {
             messages.push( `preset: ${preset} does not exist` )
         }
 
-        return messages
+        const data = [ 'query', 'variables' ]
+            .reduce( ( acc, key, index ) => { 
+                switch( key ) {
+                    case 'query':
+                        acc['query'] = this.#config['presets'][ preset ]['input']['query']
+                        break
+                    case 'variables':
+                        !Object.hasOwn( acc, key ) ? acc['variables'] = {} : ''
+                        Object
+                            .entries( this.#config['presets'][ preset ]['input']['variables'] )
+                            .forEach( ( a ) => {
+                                const [ key, value ] = a
+                                if( Object.hasOwn( userVars, key ) ) {
+                                    if( value['regex'].test( userVars[ key ] ) ) {
+                                        switch( value['type'] ) {
+                                            case 'number':
+                                                acc['variables'][ key ] = parseInt( userVars[ key ] )
+                                                break
+                                            default:
+                                                acc['variables'][ key ] = userVars[ key ]
+                                        }
+
+                                        
+                                    } else {
+                                        messages.push( `userInput ${key}: ${userVars[ key ]} is not matching ${value['regex']}`)
+                                    }
+                                } else {
+                                    // user default input
+                                    // console.log( '> user default', a )
+                                    // acc['variables'][ key ] = value['default']
+                                    messages.push( `userInput ${key} is missing`)
+                                }
+
+                                
+                            } )
+                        break
+                    default:
+                        break
+                }
+
+                return acc
+            }, {} ) 
+
+        return [ messages, data ]
     }
 
 
-    async getData( { preset, vars } ) {
-        const messages = this.#validateInput( { preset, vars } )
+    async getData( { preset, userVars, subgroup='default' } ) {
+        const [ messages, data ] = this.#validateInput( { preset, userVars, subgroup } )
         if( messages.length !== 0 ) {
             messages.forEach( msg => console.log( msg ) )
             return true
         }
 
-
         const eventId = this.#state['nonce']
         this.#state['nonce']++
 
-        let payload = this.#preparePayload( { 'cmd': preset, vars } )
+        let payload = this.#preparePayload( { 'cmd': preset, data } )
+        console.log( 'payload', payload )
         this.#dispatchCustomEvent( {
             'eventId': eventId,
             'preset': preset,
@@ -186,36 +234,46 @@ class MinaData extends EventTarget {
             'data': null
         } )
 
-        const startTime = performance.now()
-        const response = await fetch(
-            payload['fetch']['url'], 
-            {
-                'method': payload['fetch']['method'],
-                'headers': payload['fetch']['headers'],
-                'body': payload['fetch']['data']
-            }
-        )
 
-        const endTime = performance.now()
-        const executionTime = endTime - startTime
+        let result = null
+        try {
+            const startTime = performance.now()
+            const response = await fetch(
+                payload['fetch']['url'], 
+                {
+                    'method': payload['fetch']['method'],
+                    'headers': payload['fetch']['headers'],
+                    'body': payload['fetch']['data']
+                }
+            )
+    
+            const endTime = performance.now()
+            const executionTime = endTime - startTime
+    
+            this.#dispatchCustomEvent( {
+                'eventId': eventId,
+                'preset': preset,
+                'status': `received (${Math.floor( executionTime ) } ms)`,
+                'data': null
+            } )
+    
+            const result = await response.json()
+            this.#dispatchCustomEvent( {
+                'eventId': eventId,
+                'preset': preset,
+                'status': `success!`,
+                'data': JSON.stringify( result )
+            } )
+        } catch( e ) {
+            this.#dispatchCustomEvent( {
+                'eventId': eventId,
+                'preset': preset,
+                'status': `failed!`,
+                'data': null
+            } )
+        }
 
-        this.#dispatchCustomEvent( {
-            'eventId': eventId,
-            'preset': preset,
-            'status': `received (${Math.floor( executionTime ) } ms)`,
-            'data': null
-        } )
-
-        const json = await response.json()
-        this.#dispatchCustomEvent( {
-            'eventId': eventId,
-            'preset': preset,
-            'status': `success!`,
-            'data': JSON.stringify( json )
-        } )
-
-
-        return [ eventId, json ]
+        return [ eventId, result ]
     }
 
 
@@ -229,28 +287,17 @@ class MinaData extends EventTarget {
     }
 
 
-    #preparePayload( { cmd, vars={} } ) {
-        console.log( 'INSIDE >>>' )
-        console.log( 'vars', vars )
-
+    #preparePayload( { cmd, data } ) {
         this.#debug ? console.log( '' ) : ''
 
         const network = this.#config['network']['use']
         const url = this.#config['network'][ network ]['graphQl']
-        const data = { ...this.#config['presets'][ cmd ]['input'] }
-
-        Object
-            .entries( vars )
-            .forEach( a => {
-                const [ _key, _value ] = a
-                data['variables'][ _key ] = _value
-            } )
 
         const struct = {
-            'cmd': cmd,
-            'key': this.#config['presets'][ cmd ]['key'],
-            'type': this.#config['presets'][ cmd ]['type'],
-            'vars': data['variables'],
+            // 'cmd': cmd,
+            // 'key': this.#config['presets'][ cmd ]['key'],
+            // 'type': this.#config['presets'][ cmd ]['type'],
+            // 'vars': data['variables'],
             'fetch': {
                 'method': 'post',
                 'maxBodyLength': Infinity,
@@ -262,8 +309,6 @@ class MinaData extends EventTarget {
                 'data': JSON.stringify( data )
             }
         }
-
-        // console.log( `>>> ${JSON.stringify( struct, null, 4 ) }` )
 
         return struct
     }
