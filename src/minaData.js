@@ -234,7 +234,6 @@ class MinaData extends EventTarget {
             'data': null
         } )
 
-
         let result = null
         try {
             const startTime = performance.now()
@@ -294,10 +293,6 @@ class MinaData extends EventTarget {
         const url = this.#config['network'][ network ]['graphQl']
 
         const struct = {
-            // 'cmd': cmd,
-            // 'key': this.#config['presets'][ cmd ]['key'],
-            // 'type': this.#config['presets'][ cmd ]['type'],
-            // 'vars': data['variables'],
             'fetch': {
                 'method': 'post',
                 'maxBodyLength': Infinity,
