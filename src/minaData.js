@@ -116,7 +116,7 @@ class MinaData extends EventTarget {
 */
             },
             'network': {
-                'use': 'berkeley', 
+                // 'use': 'berkeley', 
                 'berkeley': {
                     'explorer': {
                         'transaction': 'https://berkeley.minaexplorer.com/transaction/',
@@ -137,10 +137,18 @@ class MinaData extends EventTarget {
     }
 
 
-    init() {
+    setEnvironment( { network } ) {
+        const networks = Object.keys( this.#config['network'] )
+
+        if(!networks.includes( network) ) {
+            console.log( `Network "${network}" does not exist.` )
+            return true
+        }
+
         this.#state = {
             'nonce': 0,
-            'subgroups': {}
+            'subgroups': {},
+            'network': network
         }
 
         return true
@@ -289,7 +297,7 @@ class MinaData extends EventTarget {
     #preparePayload( { cmd, data } ) {
         this.#debug ? console.log( '' ) : ''
 
-        const network = this.#config['network']['use']
+        const network = this.#state['network']
         const url = this.#config['network'][ network ]['graphQl']
 
         const struct = {
