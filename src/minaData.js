@@ -140,7 +140,7 @@ class MinaData extends EventTarget {
     setEnvironment( { network } ) {
         const networks = Object.keys( this.#config['network'] )
 
-        if(!networks.includes( network) ) {
+        if( !networks.includes( network ) ) {
             console.log( `Network "${network}" does not exist.` )
             return true
         }
