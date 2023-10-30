@@ -36,15 +36,55 @@ minaData.getData( {
 ## Table of Contents
 
 1. [Quickstart](#quickstart)<br>
-2. [Documentation](#documentation)
+2. [Presetsn](#presets)
 3. [Contributing](#contributing)<br>
 4. [Limitations](#limitations)<br>
 5. [Credits](#credits)<br>
 6.  [License](#license)<br>
 7.  [Code of Conduct](#code-of-conduct)<br>
 
-## Documentation
+## Presets
 
+
+
+**Preset: transactionByHash**
+
+| Name       | Description        | Type   | Regex               | Required | Default                                  |
+|------------|--------------------|--------|---------------------|----------|------------------------------------------|
+| hash       | Transaction hash   | string | /^[a-zA-Z0-9]{52}$/| true     | 5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1 |
+
+**Preset: latestBlockHeight**
+
+| Name              | Description     | Type   | Regex                | Required | Default     |
+|-------------------|-----------------|--------|----------------------|----------|-------------|
+| blockHeight_lt    | Highest block   | number | /^(0|[1-9]\d{0,8})$/ | false    | 999999999   |
+
+**Preset: latestBlockHeights**
+
+| Name   | Description | Type   | Regex         | Required | Default |
+|--------|-------------|--------|---------------|----------|---------|
+| limit  | Limit       | number | /[0-9]{0,2}/ | false    | 10      |
+
+**Preset: latestEventsFromContract**
+
+| Name              | Description      | Type   | Regex                | Required | Default                                  |
+|-------------------|------------------|--------|----------------------|----------|------------------------------------------|
+| limit             | Limit            | number | /[0-9]{0,2}/         | false    | 10                                       |
+| blockHeight_lt    | Highest block    | number | /^(0|[1-9]\d{0,8})$/ | false    | 999999999                               |
+| creator           | BTC address      | string | /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/ | true | B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM |
+
+
+This table displays the 'Preset' along with the input parameters, including their types, descriptions, regular expressions (regex), whether they are required, and their default values.
+
+Example:
+```
+minaData.getData( {
+    'preset': ' latestEventsFromContract',
+    'userVars': {
+        'creator': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM'
+    }
+})
+```
 
 
 

@@ -39,7 +39,8 @@ export class MinaData extends EventTarget {
                                 'default': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1',
                                 'type': 'string',
                                 'description': 'transaction hash',
-                                'regex': /^[a-zA-Z0-9]{52}$/
+                                'regex': /^[a-zA-Z0-9]{52}$/,
+                                'required': true
                             }
                         }
                     },
@@ -56,7 +57,8 @@ export class MinaData extends EventTarget {
                                 'default': 999999999,
                                 'type': 'number',
                                 'description': 'highest block',
-                                'regex': /^(0|[1-9]\d{0,8})$/
+                                'regex': /^(0|[1-9]\d{0,8})$/,
+                                'required': false
                             }
                         }
                     },
@@ -73,7 +75,8 @@ export class MinaData extends EventTarget {
                                 'default': 10,
                                 'type': 'number',
                                 'description': 'limit',
-                                'regex': /[0-9]{0,2}/
+                                'regex': /[0-9]{0,2}/,
+                                'required': false
                             }
                         }
                     },
@@ -91,19 +94,22 @@ export class MinaData extends EventTarget {
                                 'default': 10,
                                 'type': 'number',
                                 'description': 'limit', 
-                                'regex': /[0-9]{0,2}/
+                                'regex': /[0-9]{0,2}/,
+                                'required': false
                             },
                             'blockHeight_lt': {
                                 'default': 999999999,
                                 'type': 'number',
                                 'description': 'highest block',
-                                'regex': /^(0|[1-9]\d{0,8})$/
+                                'regex': /^(0|[1-9]\d{0,8})$/,
+                                'required': false
                             },
                             'creator': {
                                 'default': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM',
                                 'type': 'string',
                                 'description': 'btc address',
-                                'regex': /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/
+                                'regex': /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/,
+                                'required': true
                             }
                         }
                     },
