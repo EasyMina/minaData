@@ -3,7 +3,10 @@
 
 # Mina Data
 
+MinaData simplifies the retrieval of transaction data on the Mina blockchain. In doing so, it directly fetches data through the native GraphQL interfaces of the Archive Node. MinaData aims to assist you in quickly launching user interfaces.
+
 ## Quickstart
+
 
 node
 ```bash
@@ -42,12 +45,15 @@ minaData.getData( {
 
 ## Documentation
 
-Please visit [https://easymina.github.io](https://easymina.github.io)
+
+
+
+Please visit [https://easymina.github.io/minadata](https://easymina.github.io/minadata)
 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/a6b8/easymina. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/EasyMina/easyMina/blob/main/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/a6b8/easymina. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).
 
 ## Limitations
 
@@ -59,8 +65,8 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/a6b8/e
 
 ## License
 
-The module is available as open source under the terms of the [Apache 2.0](https://github.com/EasyMina/easyMina/blob/main/LICENSE).
+The module is available as open source under the terms of the [Apache 2.0](https://github.com/EasyMina/minaData/blob/main/LICENSE).
 
 ## Code of Conduct
 
-Everyone interacting in the EasyMina project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/EasyMina/easyMina/blob/main/CODE_OF_CONDUCT.md).
+Everyone interacting in the EasyMina project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).
