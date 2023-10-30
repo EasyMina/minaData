@@ -36,7 +36,7 @@ minaData.getData( {
 ## Table of Contents
 
 1. [Quickstart](#quickstart)<br>
-2. [Presetsn](#presets)
+2. [Presets](#presets)
 3. [Contributing](#contributing)<br>
 4. [Limitations](#limitations)<br>
 5. [Credits](#credits)<br>
@@ -46,27 +46,25 @@ minaData.getData( {
 ## Presets
 
 
-Certainly, here are the tables for each preset with the "Regex" column removed:
-
-**Preset: transactionByHash**
+- transactionByHash
 
 | Name       | Description        | Type   | Required | Default                                  |
 |------------|--------------------|--------|----------|------------------------------------------|
 | hash       | Transaction hash   | string | true     | 5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1 |
 
-**Preset: latestBlockHeight**
+- latestBlockHeight
 
 | Name              | Description     | Type   | Required | Default     |
 |-------------------|-----------------|--------|----------|-------------|
 | blockHeight_lt    | Highest block   | number | false    | 999999999   |
 
-**Preset: latestBlockHeights**
+- latestBlockHeights
 
 | Name   | Description | Type   | Required | Default |
 |--------|-------------|--------|----------|---------|
 | limit  | Limit       | number | false    | 10      |
 
-**Preset: latestEventsFromContract**
+- latestEventsFromContract
 
 | Name              | Description      | Type   | Required | Default                                  |
 |-------------------|------------------|--------|----------|------------------------------------------|
