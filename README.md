@@ -46,37 +46,36 @@ minaData.getData( {
 ## Presets
 
 
+Certainly, here are the tables for each preset with the "Regex" column removed:
 
 **Preset: transactionByHash**
 
-| Name       | Description        | Type   | Regex               | Required | Default                                  |
-|------------|--------------------|--------|---------------------|----------|------------------------------------------|
-| hash       | Transaction hash   | string | /^[a-zA-Z0-9]{52}$/| true     | 5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1 |
+| Name       | Description        | Type   | Required | Default                                  |
+|------------|--------------------|--------|----------|------------------------------------------|
+| hash       | Transaction hash   | string | true     | 5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1 |
 
 **Preset: latestBlockHeight**
 
-| Name              | Description     | Type   | Regex                | Required | Default     |
-|-------------------|-----------------|--------|----------------------|----------|-------------|
-| blockHeight_lt    | Highest block   | number | /^(0|[1-9]\d{0,8})$/ | false    | 999999999   |
+| Name              | Description     | Type   | Required | Default     |
+|-------------------|-----------------|--------|----------|-------------|
+| blockHeight_lt    | Highest block   | number | false    | 999999999   |
 
 **Preset: latestBlockHeights**
 
-| Name   | Description | Type   | Regex         | Required | Default |
-|--------|-------------|--------|---------------|----------|---------|
-| limit  | Limit       | number | /[0-9]{0,2}/ | false    | 10      |
+| Name   | Description | Type   | Required | Default |
+|--------|-------------|--------|----------|---------|
+| limit  | Limit       | number | false    | 10      |
 
 **Preset: latestEventsFromContract**
 
-| Name              | Description      | Type   | Regex                | Required | Default                                  |
-|-------------------|------------------|--------|----------------------|----------|------------------------------------------|
-| limit             | Limit            | number | /[0-9]{0,2}/         | false    | 10                                       |
-| blockHeight_lt    | Highest block    | number | /^(0|[1-9]\d{0,8})$/ | false    | 999999999                               |
-| creator           | BTC address      | string | /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/ | true | B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM |
+| Name              | Description      | Type   | Required | Default                                  |
+|-------------------|------------------|--------|----------|------------------------------------------|
+| limit             | Limit            | number | false    | 10                                       |
+| blockHeight_lt    | Highest block    | number | false    | 999999999                               |
+| creator           | BTC address      | string | true     | B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM |
 
 
-This table displays the 'Preset' along with the input parameters, including their types, descriptions, regular expressions (regex), whether they are required, and their default values.
-
-Example:
+**Example:**
 ```
 minaData.getData( {
     'preset': ' latestEventsFromContract',
