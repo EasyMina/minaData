@@ -11,8 +11,8 @@ const server = http.createServer( ( req, res ) => {
         case `.${folder}/`:
             filePath = `.${folder}/index.html`
             break
-        case `.${folder}/minaData.js`:
-            filePath = `./../src/minaData.js`
+        case `.${folder}/MinaData.mjs`:
+            filePath = `./../../src/MinaData.mjs`
             break
     }
 
@@ -22,6 +22,7 @@ const server = http.createServer( ( req, res ) => {
     const contentType = {
         '.html': 'text/html',
         '.js': 'text/javascript',
+        '.mjs': 'text/javascript',
         '.css': 'text/css'
     }
 

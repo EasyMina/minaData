@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mina Data</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="minaData.js"></script>
 </head>
 <body>
     <label for="presets">Choose a preset</label>
@@ -38,7 +37,7 @@
             <tbody></tbody>
         </table>
     </div>
-    <script>
+    <script type="module">
 
         class UserInterface {
             #config
@@ -155,10 +154,13 @@
             }
         }
 
+
+        import { MinaData } from './MinaData.mjs'
+        
         let debug = true
         var minaData = new MinaData( debug )
         minaData.setEnvironment( {
-            'chain': 'berkeley'
+            'network': 'berkeley'
         } )
 
         const userInterface = new UserInterface()

@@ -1,4 +1,4 @@
-class MinaData extends EventTarget {
+export class MinaData extends EventTarget {
     #config
     #debug
     #state
@@ -171,7 +171,7 @@ class MinaData extends EventTarget {
 
         if( this.getPresets().includes( preset ) ) {
             const ps = this.getPreset( { 'key': preset } )
-            console.log( 'ps', ps['input']['variables'] )
+            // console.log( 'ps', ps['input']['variables'] )
         } else {
             messages.push( `preset: ${preset} does not exist` )
         }
@@ -234,7 +234,7 @@ class MinaData extends EventTarget {
         this.#state['nonce']++
 
         let payload = this.#preparePayload( { 'cmd': preset, data } )
-        console.log( 'payload', payload )
+        // console.log( 'payload', payload )
         this.#dispatchCustomEvent( {
             'eventId': eventId,
             'preset': preset,
@@ -264,7 +264,7 @@ class MinaData extends EventTarget {
                 'data': null
             } )
     
-            const result = await response.json()
+            result = await response.json()
             this.#dispatchCustomEvent( {
                 'eventId': eventId,
                 'preset': preset,
@@ -272,6 +272,7 @@ class MinaData extends EventTarget {
                 'data': JSON.stringify( result )
             } )
         } catch( e ) {
+            console.log( `Following error occured: ${e}`)
             this.#dispatchCustomEvent( {
                 'eventId': eventId,
                 'preset': preset,
