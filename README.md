@@ -90,7 +90,7 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/a6b8/easymina. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).
+Bug reports and pull requests are welcome on GitHub at https://github.com/easymina/minaData. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).
 
 ## Limitations
 
