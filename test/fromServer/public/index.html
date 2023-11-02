@@ -7,6 +7,10 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <label for="subgroup">Subgroup: </label>
+    <input type="text" id="subgroup" name="subgroup" value="default">
+    <br><br>
+
     <label for="presets">Choose a preset</label>
     <select id="presets">
     </select>
@@ -20,16 +24,26 @@
 
     <h1>Subgroup</h1>
     <div id="subgroup">
-        
+        <table id="subgroupTable">
+            <thead>
+            <tr>
+                <th>Subgroup</th>
+                <th>Status</th>
+                <th>Data</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table> 
     </div>
 
     <h1>Events</h1>
     <div class="table-container">
-        <table id="myTable">
+        <table id="eventTable">
             <thead>
             <tr>
                 <th>EventId</th>
                 <th>Preset</th>
+                <th>Subgroup</th>
                 <th>Status</th>
                 <th>Data</th>
             </tr>
@@ -44,13 +58,22 @@
 
 
             constructor() {
-                this.#config = {}
+                this.#config = {
+                    'dom': {
+                        'subgroupsId': 'subgroupTable',
+                        'eventsId': 'eventTable'
+                    }
+                }
+
+                return true
             }
 
 
-            init() {
+            init( { onlyRequiredFields=false } ) {
+                this.#config['onlyRequiredFields'] = onlyRequiredFields 
+
                 this.#addUserInterface()
-                this.#addForm( { 'key': 'transactionByHash'} )
+                this.#addForm( { 'key': 'transactionByHash' } )
                 this.#addSubmitButton()
                 return true
             }
@@ -67,23 +90,38 @@
                         const label = document.createElement( 'label' )
                         label.setAttribute( 'for', key )
                         label.textContent = `${key}: `
-                        const inputElement = document.createElement( 'input' )
-                        const tmp = [ 
-                            [ 'type', 'text'], [ 'id', key ], 
-                            [ 'name', key ], [ 'value', value['default'] ], 
-                            [ 'required', true ], /*[ 'pattern', value['regex']*/
-                        ]
-                            .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
-                        const lineBreak = document.createElement( 'br' )
-                        form.appendChild( label)
-                        form.appendChild( inputElement)
-                        form.appendChild( lineBreak )
-                        form.appendChild( lineBreak )
+          
+                        let show
+                        if( this.#config['onlyRequiredFields'] ) {
+                            if( value['required'] ) {
+                                show = true
+                            } else {
+                                show = false
+                            }
+                        } else {
+                            show = false
+                        }
+                        
+                        if( show ) {
+                            const inputElement = document.createElement( 'input' )
+                            const tmp = [ 
+                                [ 'type', 'text'], [ 'id', key ], 
+                                [ 'name', key ], [ 'value', value['default'] ], 
+                                [ 'required', true ] 
+                                /* ,[ 'pattern', value['regex'] */
+                            ]
+                                .forEach( a => inputElement[ a[ 0 ] ] = a[ 1 ] )
+                            const lineBreak = document.createElement( 'br' )
+                            form.appendChild( label )
+                            form.appendChild( inputElement )
+                            form.appendChild( lineBreak )
+                            form.appendChild( lineBreak )
+                        }
                     } )
                 
                 const ipt = document.createElement( 'input' )
                 ipt.type = 'submit'
-                ipt.value = 'SUBMIT'
+                ipt.value = 'getData()'
                 form.appendChild( ipt )
             }
 
@@ -128,9 +166,30 @@
 
                         const selectElement = document.getElementById( 'presets' )
                         const key = selectElement.options[ selectElement.selectedIndex ].value
+                        const subgroup = document.getElementById( 'subgroup' ).value
 
-                        minaData.getData( { 'preset': key, userVars } )
+                        minaData.getData( { 'preset': key, userVars, subgroup } )
                 } )
+            }
+
+
+            addSubgroupRow( { columns } ) {
+                var newRow = document.createElement( 'tr' )
+                Object
+                    .entries( columns )
+                    .forEach( ( a ) => {
+                        const [ key, value ] = a
+                        const cell = document.createElement( 'td' )
+                        cell.textContent = value
+                        newRow.appendChild( cell )
+                    } )
+
+                const table = document.getElementById( this.#config['dom']['subgroupsId'] )
+
+                const firstRow = table.querySelector( 'tbody tr:first-child' )
+                table
+                    .querySelector( 'tbody' )
+                    .insertBefore( newRow, firstRow )
             }
 
 
@@ -145,12 +204,12 @@
                         newRow.appendChild( cell )
                     } )
 
-                const table = document.getElementById( 'myTable' )
+                const table = document.getElementById( this.#config['dom']['eventsId'] )
 
-                const firstRow = table.querySelector('tbody tr:first-child')
-                table.querySelector('tbody').insertBefore(newRow, firstRow);
-
-                //table.appendChild( newRow )
+                const firstRow = table.querySelector( 'tbody tr:first-child' )
+                table
+                    .querySelector( 'tbody' )
+                    .insertBefore( newRow, firstRow )
             }
         }
 
@@ -164,12 +223,22 @@
         } )
 
         const userInterface = new UserInterface()
-        userInterface.init()
+        userInterface.init( { 
+            'onlyRequiredFields': true 
+        } )
 
         minaData.addEventListener(
                 'status', 
                 ( event ) => { 
                     userInterface.addEventRow( { 'columns': event.detail } )
+                }
+            )
+
+        minaData.addEventListener(
+                'subgroup', 
+                ( subgroup ) => { 
+                    userInterface.addSubgroupRow( { 'columns': subgroup.detail } )
+                    console.log( '>>>', event )
                 }
             )
 

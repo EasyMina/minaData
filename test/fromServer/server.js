@@ -14,6 +14,12 @@ const server = http.createServer( ( req, res ) => {
         case `.${folder}/MinaData.mjs`:
             filePath = `./../../src/MinaData.mjs`
             break
+        case `.${folder}/data/presets.mjs`:
+            filePath = `./../../src/data/presets.mjs`
+            break
+        case `.${folder}/helpers/mixed.mjs`:
+            filePath = `./../../src/helpers/mixed.mjs`
+            break
     }
 
     console.log( `>> ${filePath}`)
