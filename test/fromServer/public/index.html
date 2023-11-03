@@ -22,7 +22,7 @@
         <input type="submit" value="Submit">
     </form>
 
-    <h1>Subgroup</h1>
+    <h1>Event: subgroup</h1>
     <div id="subgroup">
         <table id="subgroupTable">
             <thead>
@@ -36,7 +36,7 @@
         </table> 
     </div>
 
-    <h1>Events</h1>
+    <h1>Event: status</h1>
     <div class="table-container">
         <table id="eventTable">
             <thead>
@@ -51,6 +51,8 @@
             <tbody></tbody>
         </table>
     </div>
+
+    <script src="https://unpkg.com/minadata@latest/dist/MinaData.js" type="module"></script>
     <script type="module">
 
         class UserInterface {
@@ -215,8 +217,9 @@
 
 
         // import { MinaData } from './MinaData.mjs'
-        import { MinaData } from './dist/MinaData.js'
-
+        // import { MinaData } from './dist/MinaData.js'
+        // import { MinaData } from 'https://unpkg.com/minadata@latest/dist/MinaData.js'
+        import { MinaData } from 'MinaData.js'
 
         let debug = true
         var minaData = new MinaData( debug )
