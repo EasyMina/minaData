@@ -114,12 +114,11 @@ export class MinaData extends EventTarget {
             this.#dispatchSubgroupEvent( { 
                 subgroup, 
                 'status': 'started',
-                'data': null // JSON.stringify( this.#state['subgroups'][ subgroup ]['ids'] )
+                'data': null
             } )
         } 
 
         this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = -1
-
 
         let payload = this.#preparePayload( { 'cmd': preset, data } )
         this.#dispatchSingleDataEvent( {
@@ -156,7 +155,7 @@ export class MinaData extends EventTarget {
 
             this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = 1
         } catch( e ) {
-            console.log( `Following error occured: ${e}`)
+            console.log( `Following error occured: ${e}` )
             this.#dispatchSingleDataEvent( {
                 'eventId': eventId,
                 'preset': preset,
@@ -178,7 +177,7 @@ export class MinaData extends EventTarget {
                 .every( ( [ key, value ] ) => { return ( value === 1 ) } )
 
             const _endTime = performance.now()
-            const _executionTime = _endTime - this.#state['subgroups'][ subgroup ]['time']
+            const _executionTime = Math.floor( _endTime - this.#state['subgroups'][ subgroup ]['time'] )
 
             if( success ) {
                 this.#dispatchSubgroupEvent( { 
