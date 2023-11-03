@@ -6,7 +6,7 @@ MinaData is a project by developers, for developers, aimed at making interaction
    - Visit [https://berkeley.graphql.minaexplorer.com](https://berkeley.graphql.minaexplorer.com) and identify a GraphQL query that may be of interest to other developers.
    - Create a template. Go to [./src/data/presets.mjs](https://github.com/EasyMina/minaData/blob/dcaa6e8b6b3ee91146f4e90e6e2e9dc6d130d0c7/src/data/presets.mjs#L4) where you can find all existing presets. Use the following structure:
 
-   ```json
+   ```
    {
        'latestBlockHeight': {
            'description': 'Retrieve the most recent block height from the selected blockchain.', 
