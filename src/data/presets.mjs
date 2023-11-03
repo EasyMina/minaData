@@ -4,12 +4,13 @@ import { keyPathToValue } from './../helpers/mixed.mjs'
 const templates = {
     'presets': {
         'transactionByHash': {
+            'description': 'Retrieve transaction data using a given transaction hash.',
             'input': {
                 'query': "query q($hash: String!) {\n  transaction(query: {hash: $hash}) {\n    hash\n    dateTime\n    blockHeight\n    from\n    nonce\n    to\n    toAccount {\n      token\n    }\n  }\n}",
                 'variables': {
                     'hash': {
                         'default': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1',
-                        'description': 'transaction hash string',
+                        'description': 'Set the transaction hash string.',
                         'regex': 'regexs__transactionHash',
                         'required': true,
                         'type': 'string'
@@ -22,12 +23,13 @@ const templates = {
             }
         },
         'latestBlockHeight': {
+            'description': 'Retrieve the most recent block height from the selected blockchain.', 
             'input': {
                 'query': "query q($blockHeight_lt: Int) {\n  block(query: {blockHeight_lt: $blockHeight_lt}) {\n    blockHeight\n    dateTime\n  }\n}",
                 'variables': {
                     'blockHeight_lt': {
                         'default': 999999999,
-                        'description': 'highest block',
+                        'description': 'Set the highest block height.',
                         'regex': 'regexs__blockHeight_lt',
                         'required': false,
                         'type': 'number'
@@ -40,12 +42,13 @@ const templates = {
             }
         },
         'latestBlockHeights': {
+            'description': 'Retrieve the most recent block height from the selected blockchain.', 
             'input': {
                 'query': "query q($limit: Int) {\n  blocks(limit: $limit, sortBy: BLOCKHEIGHT_DESC) {\n    blockHeight\n    protocolState {\n      consensusState {\n        slotSinceGenesis\n        slot\n      }\n    }\n    dateTime\n    receivedTime\n  }\n}",
                 'variables': {
                     'limit': {
                         'default': 10,
-                        'description': 'set limit how many result will shown.',
+                        'description': 'Set a limit on how many results will be shown.',
                         'regex': 'regexs__limit',
                         'required': false,
                         'type': 'number'
@@ -58,19 +61,20 @@ const templates = {
             }
         },       
         'latestEventsFromContract': {
+            'description': 'Retrieve the latest events from a Mina contract.',
             'input': {
                 'query': "query q($limit: Int!, $blockHeight_lt: Int!, $creator: String!) {\n events(query: {blockHeight_lt: $blockHeight_lt, blockStateHash: {creator: $creator}}, sortBy: BLOCKHEIGHT_DESC, limit: $limit) {\n blockHeight\n dateTime\n event\n blockStateHash {\n creatorAccount {\n publicKey\n }\n }\n }\n}",
                 'variables': {
                     'creator': {
                         'default': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM',
-                        'description': 'set mina address from the creator.',
+                        'description': 'Set the creator\'s address as the minimum address.',
                         'regex': 'regexs__minaAddress',
                         'required': true,
                         'type': 'string'
                     },
                     'limit': {
                         'default': 10,
-                        'description': 'set limit how many result will shown.', 
+                        'description': 'Set a limit on how many results will be shown.', 
                         'regex': 'regexs__limit',
                         'required': false,
                         'type': 'number'
