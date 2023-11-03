@@ -113,7 +113,9 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
                     'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
                 }
             } )
-            .then( result => console.log( `Here is the result ${JSON.stringify( result )}` ) )
+            .then( result => {
+                console.log( `Here is the result ${JSON.stringify( result )}` )
+            } )
     </script>
 </body>
 </html>
