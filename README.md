@@ -88,6 +88,13 @@ minaData.getData( {
 Please visit [https://easymina.github.io/minadata](https://easymina.github.io/minadata)
 
 
+## Create Dist 
+
+```
+    npx webpack --config webpack.config.js
+```
+
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/easymina/minaData. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).

@@ -20,8 +20,8 @@ const server = http.createServer( ( req, res ) => {
         case `.${folder}/helpers/mixed.mjs`:
             filePath = `./../../src/helpers/mixed.mjs`
             break
-        case `.${folder}/dist/MinaData.mjs`:
-            filePath = `./../../dist/MinaData.mjs`
+        case `.${folder}/dist/MinaData.js`:
+            filePath = `./../../dist/MinaData.js`
             break
     }
 
