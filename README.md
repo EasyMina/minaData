@@ -139,7 +139,7 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/easymi
 
 ## Credits
 
-- This project was supported by the [zkIgnite](https://zkignite.minaprotocol.com) grant program.
+- This project is supported by the [zkIgnite](https://zkignite.minaprotocol.com) grant program.
 
 ## License
 
