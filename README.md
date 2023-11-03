@@ -37,11 +37,12 @@ minaData.getData( {
 
 1. [Quickstart](#quickstart)<br>
 2. [Presets](#presets)
-3. [Contributing](#contributing)<br>
-4. [Limitations](#limitations)<br>
-5. [Credits](#credits)<br>
-6.  [License](#license)<br>
-7.  [Code of Conduct](#code-of-conduct)<br>
+3. [How to Use MinaData in HTML]()
+4. [Contributing](#contributing)<br>
+5. [Limitations](#limitations)<br>
+6. [Credits](#credits)<br>
+7.  [License](#license)<br>
+8.  [Code of Conduct](#code-of-conduct)<br>
 
 ## Presets
 
@@ -83,15 +84,46 @@ minaData.getData( {
 })
 ```
 
-
-
 Please visit [https://easymina.github.io/minadata](https://easymina.github.io/minadata)
 
 
-## Create Dist 
+## How to Use MinaData in HTML
 
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your MinaData Project</title>
+</head>
+<body>
+    <script type="module">
+        import { MinaData } from 'https://unpkg.com/minadata@latest/dist/MinaData.js'
+
+        const minaData = new MinaData()
+        minaData.setEnvironment( {
+            'network': 'berkeley'
+        } )
+
+        minaData
+            .getData( {
+                'preset': 'transactionByHash',
+                'userVars': {
+                    'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
+                }
+            } )
+            .then( result => console.log( `Here is the result ${JSON.stringify( result )}` ) )
+    </script>
+</body>
+</html>
+
+``````
+
+
+**Create new dist**
 ```
-    npx webpack --config webpack.config.js
+npx webpack --config webpack.config.js
 ```
 
 
