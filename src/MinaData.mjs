@@ -9,7 +9,10 @@
     Please read the full Apache License 2.0 for more details on your rights and responsibilities regarding the usage of this code.
 */
 
-import { presets } from './data/presets.mjs'
+import { presets as pre } from './data/presets.mjs'
+import { keyPathToValue, printMessages } from './helpers/mixed.mjs'
+
+import { config } from './data/config.mjs'
 
 
 export class MinaData extends EventTarget {
@@ -22,47 +25,14 @@ export class MinaData extends EventTarget {
     constructor( debug=false ) {
         super()
         this.#debug = debug
-        this.#config = {
-            'event': {
-                'singleFetch': 'status',
-                'subgroup': 'subgroup'
-            },
-            'render': {
-                'frameInterval': 1000,
-                'delayBetweenRequests': 10000,
-                'singleMaxInSeconds': 30
-            },
-            'network': {
-                // 'use': 'berkeley', 
-                'berkeley': {
-                    'explorer': {
-                        'transaction': 'https://berkeley.minaexplorer.com/transaction/',
-                        'wallet': 'https://berkeley.minaexplorer.com/wallet/'
-                    },
-                    'node': 'https://berkeley.graphql.minaexplorer.com',
-                    'nodeProxy': 'https://proxy.berkeley.minaexplorer.com/graphql',
-                    'graphQl': 'https://berkeley.graphql.minaexplorer.com',
-                    'faucet': {
-                        'api': 'https://faucet.minaprotocol.com/api/v1/faucet',
-                        'web': 'https://faucet.minaprotocol.com/?address={{address}}',
-                        'network': 'berkeley-qanet'
-                    },
-                    'transaction_fee': 100_000_000,
-                }
-            }
-        }
+        this.#config = config
     }
 
 
     setEnvironment( { network } ) {
-        this.#addPresets()
-
-        const networks = Object.keys( this.#config['network'] )
-
-        if( !networks.includes( network ) ) {
-            console.log( `Network "${network}" does not exist.` )
-            return true
-        }
+        this.#setPresets( { 'presets': pre } )
+        const [ messages, comments ] = this.#validateSetEnvironment( { network } )
+        printMessages( { messages, comments } )
 
         this.#state = {
             'environment': true,
@@ -81,26 +51,45 @@ export class MinaData extends EventTarget {
 
 
     getPreset( { key } ) {
+        const [ messages, comments ] = this.#validateGetPreset( { key } )
+        printMessages( { messages, comments } )
+
         return this.#presets[ key ]
     }
 
 
-    #addPresets() {
-        this.#presets = presets
+    #setPresets( { presets } ) {
+        const [ messages, comments ] = this.#validatePresets( { presets } ) 
+        printMessages( { messages, comments } )
+
+        this.#presets = Object
+            .entries( presets['presets'] )
+            .reduce( ( acc, a, index ) => {
+                const [ key, value ] = a
+
+                acc[ key ] = value
+                acc[ key ]['input']['variables'] = Object
+                    .entries( acc[ key ]['input']['variables'] )
+                    .reduce( ( abb, b, rindex ) => {
+                        const [ _key, _value ] = b
+                        abb[ _key ] = _value
+                        abb[ _key ]['regex'] = keyPathToValue( { 
+                            'data': presets, 
+                            'keyPath': abb[ _key ]['regex']
+                        } )
+
+                        return abb
+                    }, {} )
+                return acc
+            }, {} )
+
+        return true
     }
 
 
     async getData( { preset, userVars, subgroup='default' } ) {
-        const [ messages, comments, data ] = this.#validateInput( { preset, userVars, subgroup } )
-
-        if( this.#debug ) {
-            comments.forEach( a => console.log( a ) )
-        }
-
-        if( messages.length !== 0 ) {
-            messages.forEach( msg => console.log( msg ) )
-            return true
-        }
+        const [ messages, comments, data ] = this.#validateGetData( { preset, userVars, subgroup } )
+        printMessages( { messages, comments } )
 
         const eventId = this.#state['nonce']
         this.#state['nonce']++
@@ -120,7 +109,7 @@ export class MinaData extends EventTarget {
 
         this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = -1
 
-        let payload = this.#preparePayload( { 'cmd': preset, data } )
+        let payload = this.#preparePayload( { preset, data } )
         this.#dispatchSingleDataEvent( {
             'eventId': eventId,
             'preset': preset,
@@ -171,7 +160,6 @@ export class MinaData extends EventTarget {
             .every( ( [ key, value ] ) => { return ( value !== -1 ) } )
         
         if( subgroupStatus ) {
-            console.log( 'inside')
             const success = Object
                 .entries( this.#state['subgroups'][ subgroup ]['ids'] )
                 .every( ( [ key, value ] ) => { return ( value === 1 ) } )
@@ -201,66 +189,282 @@ export class MinaData extends EventTarget {
     }
 
 
-    #validateInput( { preset, userVars, subgroup } ) {
-        let messages = []
-        let comments = []
+    #preparePayload( { preset, data } ) {
+        this.#debug ? console.log( '' ) : ''
 
-        if( this.getPresets().includes( preset ) ) {
-            const ps = this.getPreset( { 'key': preset } )
-            // console.log( 'ps', ps['input']['variables'] )
-        } else {
-            messages.push( `preset: ${preset} does not exist` )
+        const ps = this.getPreset( { 'key': preset } )
+        const type = ps['input']['query']['schema']
+
+        const network = this.#state['network']
+        const url = this.#config['network'][ network ]['graphQl'][ type ][ 0 ]
+
+        const struct = {
+            'fetch': {
+                'method': 'post',
+                'maxBodyLength': Infinity,
+                'url': url,
+                'headers': { 
+                    'Content-Type': 'application/json', 
+                    'Accept': 'application/json'
+                },
+                'data': JSON.stringify( data )
+            }
         }
 
-        const data = [ 'query', 'variables' ]
-            .reduce( ( acc, key, index ) => { 
-                switch( key ) {
-                    case 'query':
-                        acc['query'] = this.#presets[ preset ]['input']['query']
-                        break
-                    case 'variables':
-                        !Object.hasOwn( acc, key ) ? acc['variables'] = {} : ''
-                        Object
-                            .entries( this.#presets[ preset ]['input']['variables'] )
-                            .forEach( ( a ) => {
-                                const [ key, value ] = a
-                                if( Object.hasOwn( userVars, key ) ) {
-                                    if( value['regex'].test( userVars[ key ] ) ) {
-                                        switch( value['type'] ) {
-                                            case 'number':
-                                                acc['variables'][ key ] = parseInt( userVars[ key ] )
-                                                break
-                                            default:
-                                                acc['variables'][ key ] = userVars[ key ]
-                                        }
-
-                                        
-                                    } else {
-                                        messages.push( `userInput ${key}: ${userVars[ key ]} is not matching ${value['regex']}`)
-                                    }
-                                } else {
-                                    if( value['required'] ) {
-                                        messages.push( `userInput ${key} is missing and required.` )
-                                    } else {
-                                        comments.push( `userInput ${key} is missing, default "${value['default']}" will set instead.` )
-                                        acc['variables'][ key ] = value['default']
-                                    }
-                                }
-                            } )
-                        break
-                    default:
-                        break
-                }
-
-                return acc
-            }, {} ) 
-
-        return [ messages, comments, data ]
+        return struct
     }
 
 
-    #validateFetch() {
+    #validateSetEnvironment( { network } ) {
+        const messages = []
+        const comments = []
 
+        const networks = Object
+            .keys( this.#config['network'] )
+
+        if( !networks.includes( network ) ) {
+            messages.push( `Network "${network}" does not exist.` )
+        }
+
+        return [ messages, comments ]
+    }
+
+
+    #validateGetPreset( { key } ) {
+        const messages = []
+        const comments = []
+
+        const keys = this.getPresets()
+        if( !keys.includes( key ) ) {
+            
+            messages.push( `Key "key" with value "${key}" not a valid preset key. Use ${keys.join( ', ' )} instead.` )
+        }
+
+        return [ messages, comments ]
+    }
+
+
+    #validatePreset( { presetValue, presetKey } ) {
+        const isObject = ( a ) => a && typeof a === 'object' && !Array.isArray( a )
+        const isRegex = ( a ) => a instanceof RegExp
+    
+        const validateStructure = ( obj, key, type ) => {
+            if( !obj.hasOwnProperty( key ) ) { return false }
+            if( typeof obj[ key ] !== type ) { return false }
+            return true
+        }
+    
+    
+        const messages = []
+        const comments = []
+    
+        if( !isObject( presetValue ) ) {
+            messages.push( `["${presetKey}"] should be type of object.` )
+        } else if( !validateStructure( presetKey, 'description', 'string' ) ) {
+            const tests = [
+                [ 
+                    !validateStructure( presetValue, 'description', 'string' ),
+                    `["${presetKey}"]["description"] should be type of string.`
+                ],
+                [
+                    !validateStructure( presetValue, 'input', 'object' ),
+                    `["${presetKey}"]["input"] should be type of object.`
+                ],
+                [
+                    !validateStructure( presetValue, 'expect', 'object' ),
+                    `["${presetKey}"]["expect"] should be type of object.`
+                ]
+            ]
+                .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
+        }
+    
+       
+        if( messages.length === 0 ) {
+            const tests = [
+                [
+                    !validateStructure( presetValue['input'], 'query', 'object' ),
+                    `["${presetKey}"]["input"]["query"] should be type of object.`
+                ],
+                [
+                    !validateStructure( presetValue['input'], 'variables', 'object' ),
+                    `["${presetKey}"]["input"]["variables"] should be type of object.`
+                ]
+            ]
+                .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
+        }
+    
+        if( messages.length === 0 ) {
+                const n =  [ 'cmd', 'schema' ]
+                    .forEach( key => { 
+                        if( typeof presetValue['input']['query'][ key ] !== 'string' ) {
+                            messages.push( `["${presetKey}"]["input"]["query"]["${key}"] is not type of string.` )
+                        }
+                    } )
+        }
+    
+        if( messages.length === 0 ) {
+            Object
+                .entries( presetValue['input']['variables'] )
+                .forEach( a => {
+                    const [ key, variable ] = a
+                    if( !isObject( variable ) ) {
+                        messages.push( `["${presetKey}"]["input"]["variables"]["${key}"] should be type of object.` )
+                    } else {
+                        const test = [
+    /*
+                            [
+                                !validateStructure( variable, 'default', 'string' ),
+                                `["${presetKey}"]["input"]["variables"]["${key}"]["default"] should be type of string.`
+                            ],
+    */
+                            [
+                                !validateStructure( variable, 'description', 'string' ),
+                                `["${presetKey}"]["input"]["variables"]["${key}"]["description"] should be type of string.`
+                            ],
+                            [
+                                !validateStructure( variable, 'regex', 'string' ),
+                                `["${presetKey}"]["input"]["variables"]["${key}"]["regex"] should be type of string.`
+                            ],
+                            [
+                                !validateStructure( variable, 'required', 'boolean' ),
+                                `["${presetKey}"]["input"]["variables"]["${key}"]["required"] should be type of boolean.`
+                            ],
+                            [
+                                !validateStructure(variable, 'type', 'string' ),
+                                `["${presetKey}"]["input"]["variables"]["${key}"]["schema"] should be type of string.`
+                            ]
+                        ]
+                            .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
+                    }
+                }
+            )
+        }
+    
+        if( messages.length === 0 ) {
+            const n = [
+                [
+                    !validateStructure( presetValue['expect'], 'key', 'string' ),
+                    `["${presetKey}"]["expect"]["key"] should be type of string.`
+                ],
+                [
+                    !validateStructure( presetValue['expect'], 'type', 'string' ),
+                    `["${presetKey}"]["expect"]["type"] should be type of string.`
+                ]
+            ]
+                .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
+        }
+    
+        return [ messages, comments ]
+    }
+    
+    
+    
+    #validatePresets( { presets } ) {
+        const isObject = ( a ) => a && typeof a === 'object' && !Array.isArray( a )
+        // const isRegex = ( a ) => a instanceof RegExp
+    
+        const validateStructure = ( obj, key, type ) => {
+            if( !obj.hasOwnProperty( key ) ) { return false }
+            if( typeof obj[ key ] !== type ) { return false }
+            return true
+        }
+    
+        let messages = []
+        let comments = []
+    
+        if( !isObject( presets ) ) {
+            messages.push( `Presets should be an object` )
+        } else if( !validateStructure( presets, 'presets', 'object' ) ) {
+            messages.push( `Key "presets" is not type object` )
+        } else if( !validateStructure( presets, 'regexs', 'object' ) ) {
+            messages.push( `Key "regex" is not type object` )
+        } else {
+            [ messages, comments ] = Object
+                .entries( presets['presets'] )
+                .reduce( ( acc, a, index ) => {
+                    const [ key, value ] = a 
+                    const [ m, c ] = this.#validatePreset( { 
+                        'presetValue': value, 
+                        'presetKey': key 
+                    } )
+
+                    const tmp = [ m, c ]
+                        .forEach( ( a, rindex ) => {
+                            a.length > 0 ? acc[ rindex ].push( ...a ) : ''
+                        } )
+                    return acc
+                }, [ messages, comments ]  )
+        }
+    
+        return [ messages, comments ]
+    }
+
+
+    #validateGetData( { preset, userVars, subgroup } ) {
+        let messages = []
+        let comments = []
+        let data = null
+
+
+        const [ m, c ] = this.#validateGetPreset( { 'key': preset } )
+        messages.push( ...m )
+        comments.push( ...c )
+
+        if( messages.length === 0 ) {
+            const ps = this.getPreset( { 'key': preset } )
+            const type = ps['input']['query']['schema']
+
+            if( !Object.hasOwn( this.#config['network'][ this.#state['network'] ]['graphQl'], type ) ) {
+                messages.push( `Preset "${preset}" GraphQl type of "${type}" not known.` )
+            } else if( this.#config['network'][ this.#state['network'] ]['graphQl'][ type ].length === 0 ){
+                messages.push( `Preset is for network "${this.#state['network']}" not available.` )
+            }
+        }
+
+        if( messages.length === 0 ) {
+            data = [ 'query', 'variables' ]
+                .reduce( ( acc, key, index ) => { 
+                    switch( key ) {
+                        case 'query':
+                            acc['query'] = this.#presets[ preset ]['input']['query']['cmd']
+                            break
+                        case 'variables':
+                            !Object.hasOwn( acc, key ) ? acc['variables'] = {} : ''
+                            Object
+                                .entries( this.#presets[ preset ]['input']['variables'] )
+                                .forEach( ( a ) => {
+                                    const [ key, value ] = a
+                                    if( Object.hasOwn( userVars, key ) ) {
+                                        if( value['regex'].test( userVars[ key ] ) ) {
+                                            switch( value['type'] ) {
+                                                case 'number':
+                                                    acc['variables'][ key ] = parseInt( userVars[ key ] )
+                                                    break
+                                                default:
+                                                    acc['variables'][ key ] = userVars[ key ]
+                                            }
+                                        } else {
+                                            messages.push( `userInput ${key}: ${userVars[ key ]} is not matching ${value['regex']}`)
+                                        }
+                                    } else {
+                                        if( value['required'] ) {
+                                            messages.push( `userInput ${key} is missing and required.` )
+                                        } else {
+                                            comments.push( `userInput ${key} is missing, default "${value['default']}" will set instead.` )
+                                            acc['variables'][ key ] = value['default']
+                                        }
+                                    }
+                                } )
+                            break
+                        default:
+                            break
+                    }
+
+                    return acc
+                }, {} ) 
+        }
+
+        return [ messages, comments, data ]
     }
 
 
@@ -282,28 +486,5 @@ export class MinaData extends EventTarget {
         )
         this.dispatchEvent( event )
         return true
-    }
-
-
-    #preparePayload( { cmd, data } ) {
-        this.#debug ? console.log( '' ) : ''
-
-        const network = this.#state['network']
-        const url = this.#config['network'][ network ]['graphQl']
-
-        const struct = {
-            'fetch': {
-                'method': 'post',
-                'maxBodyLength': Infinity,
-                'url': url,
-                'headers': { 
-                    'Content-Type': 'application/json', 
-                    'Accept': 'application/json'
-                },
-                'data': JSON.stringify( data )
-            }
-        }
-
-        return struct
     }
 }
