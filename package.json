@@ -1,6 +1,6 @@
 {
   "name": "minadata",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "MinaData simplifies the retrieval of transaction data on the Mina blockchain. In doing so, it directly fetches data through the native GraphQL interfaces of the Archive Node. MinaData aims to assist you in quickly launching user interfaces.",
   "main": "src/MinaData.mjs",
   "directories": {
@@ -10,7 +10,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "a6b8",
   "license": "Apache-2.0",
   "devDependencies": {
     "@babel/preset-env": "^7.23.2",

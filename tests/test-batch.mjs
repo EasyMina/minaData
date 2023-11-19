@@ -4,7 +4,7 @@ import fs from 'fs'
 
 const minaData = new MinaData()
 
-minaData.setEnvironment( {
+minaData.init( {
     'network': 'berkeley'
 } )
 
@@ -20,7 +20,7 @@ for( const key of presets ) {
         .entries( preset['input']['variables'] ) 
         .reduce( ( acc, a, index ) => {
             const [ key, value ] = a
-            acc[ key ] = value['default']
+            acc[ key ] = value['default']['berkeley']
             return acc
         }, {} )
 

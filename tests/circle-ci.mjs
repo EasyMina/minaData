@@ -1,7 +1,7 @@
 import { MinaData } from './../src/MinaData.mjs'
 
 const minaData = new MinaData()
-minaData.setEnvironment( {
+minaData.init( {
     'network': 'berkeley'
 } )
 

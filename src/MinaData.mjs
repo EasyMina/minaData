@@ -29,9 +29,8 @@ export class MinaData extends EventTarget {
     }
 
 
-    setEnvironment( { network } ) {
-        this.#setPresets( { 'presets': pre } )
-        const [ messages, comments ] = this.#validateSetEnvironment( { network } )
+    init( { network } ) {
+        const [ messages, comments ] = this.#validateInit( { network } )
         printMessages( { messages, comments } )
 
         this.#state = {
@@ -41,7 +40,9 @@ export class MinaData extends EventTarget {
             'network': network
         }
 
-        return true
+        this.#setPresets( { 'presets': pre } )
+
+        return this
     }
 
 
@@ -73,9 +74,9 @@ export class MinaData extends EventTarget {
                     .reduce( ( abb, b, rindex ) => {
                         const [ _key, _value ] = b
                         abb[ _key ] = _value
-                        abb[ _key ]['regex'] = keyPathToValue( { 
+                        abb[ _key ]['validation'] = keyPathToValue( { 
                             'data': presets, 
-                            'keyPath': abb[ _key ]['regex']
+                            'keyPath': abb[ _key ]['validation']
                         } )
 
                         return abb
@@ -88,7 +89,8 @@ export class MinaData extends EventTarget {
 
 
     async getData( { preset, userVars, subgroup='default' } ) {
-        const [ messages, comments, data ] = this.#validateGetData( { preset, userVars, subgroup } )
+        subgroup = `${subgroup}`
+        const [ messages, comments ] = this.#validateGetData( { preset, userVars } )
         printMessages( { messages, comments } )
 
         const eventId = this.#state['nonce']
@@ -109,7 +111,7 @@ export class MinaData extends EventTarget {
 
         this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = -1
 
-        let payload = this.#preparePayload( { preset, data } )
+        let payload = this.#preparePayload( { preset, userVars } )
         this.#dispatchSingleDataEvent( {
             'eventId': eventId,
             'preset': preset,
@@ -167,29 +169,20 @@ export class MinaData extends EventTarget {
             const _endTime = performance.now()
             const _executionTime = Math.floor( _endTime - this.#state['subgroups'][ subgroup ]['time'] )
 
-            if( success ) {
-                this.#dispatchSubgroupEvent( { 
-                    subgroup, 
-                    'status': `success! (${_executionTime} ms)`,
-                    'data': JSON.stringify( this.#state['subgroups'][ subgroup ]['ids'] )
-                } )
-            } else {
-                this.#dispatchSubgroupEvent( { 
-                    subgroup, 
-                    'status': 'failed!',
-                    'data': JSON.stringify( this.#state['subgroups'][ subgroup ]['ids'] )
-                } )
-            }
+            this.#dispatchSubgroupEvent( { 
+                subgroup, 
+                'status': ( success ) ? `success! (${_executionTime} ms)` : 'failed!',
+                'data': JSON.stringify( this.#state['subgroups'][ subgroup ]['ids'] )
+            } )
         } else {
             console.log( 'outsude')
         }
-        
 
         return [ eventId, result ]
     }
 
 
-    #preparePayload( { preset, data } ) {
+    #preparePayload( { preset, userVars } ) {
         this.#debug ? console.log( '' ) : ''
 
         const ps = this.getPreset( { 'key': preset } )
@@ -197,6 +190,31 @@ export class MinaData extends EventTarget {
 
         const network = this.#state['network']
         const url = this.#config['network'][ network ]['graphQl'][ type ][ 0 ]
+
+        const data = {}
+        data['query'] = this.#presets[ preset ]['input']['query']['cmd']
+        data['variables'] = Object
+            .entries( ps['input']['variables'] )
+            .reduce( ( acc, a, index ) => {
+                const [ key, value ] = a
+                const variable = this.#presets[ preset ]['input']['variables'][ key ]
+                if( Object.hasOwn( userVars, key ) ) {
+                    switch( variable['validation']['post'] ) {
+                        case 'string':
+                            acc[ key ] = `${userVars[ key ]}`
+                            break
+                        case 'number':
+                            acc[ key ] = parseInt( userVars[ key ] )
+                            break
+                        default:
+                            console.log( 'Something went wrong.' )
+                    }
+                    
+                } else {
+                    acc[ key ] = variable['default'][ network ]
+                }
+                return acc
+            }, {} )
 
         const struct = {
             'fetch': {
@@ -215,7 +233,7 @@ export class MinaData extends EventTarget {
     }
 
 
-    #validateSetEnvironment( { network } ) {
+    #validateInit( { network } ) {
         const messages = []
         const comments = []
 
@@ -254,7 +272,6 @@ export class MinaData extends EventTarget {
             return true
         }
     
-    
         const messages = []
         const comments = []
     
@@ -278,7 +295,6 @@ export class MinaData extends EventTarget {
                 .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
         }
     
-       
         if( messages.length === 0 ) {
             const tests = [
                 [
@@ -292,13 +308,22 @@ export class MinaData extends EventTarget {
             ]
                 .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
         }
-    
+
         if( messages.length === 0 ) {
                 const n =  [ 'cmd', 'schema' ]
                     .forEach( key => { 
                         if( typeof presetValue['input']['query'][ key ] !== 'string' ) {
                             messages.push( `["${presetKey}"]["input"]["query"]["${key}"] is not type of string.` )
                         }
+
+                        if( key === 'schema' ) {
+                            const k = Object
+                                .keys( this.#config['network'][ this.#state['network'] ]['graphQl'] )
+
+                            if( !k.includes( presetValue['input']['query'][ key ] ) ) { 
+                                messages.push( `["${presetKey}"]["input"]["query"]["${key}"] value is not accepted. Use ${k.join( ', ' )} instead.`) 
+                            }
+                        } 
                     } )
         }
     
@@ -322,17 +347,19 @@ export class MinaData extends EventTarget {
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["description"] should be type of string.`
                             ],
                             [
-                                !validateStructure( variable, 'regex', 'string' ),
+                                !validateStructure( variable, 'validation', 'string' ),
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["regex"] should be type of string.`
                             ],
                             [
                                 !validateStructure( variable, 'required', 'boolean' ),
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["required"] should be type of boolean.`
                             ],
+                        /*
                             [
                                 !validateStructure(variable, 'type', 'string' ),
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["schema"] should be type of string.`
                             ]
+                        */
                         ]
                             .forEach( ( [ test, msg ] ) => test ? messages.push( msg ) : '' )
                     }
@@ -400,7 +427,7 @@ export class MinaData extends EventTarget {
     }
 
 
-    #validateGetData( { preset, userVars, subgroup } ) {
+    #validateGetData( { preset, userVars } ) {
         let messages = []
         let comments = []
         let data = null
@@ -419,9 +446,72 @@ export class MinaData extends EventTarget {
             } else if( this.#config['network'][ this.#state['network'] ]['graphQl'][ type ].length === 0 ){
                 messages.push( `Preset is for network "${this.#state['network']}" not available.` )
             }
+
+            if( userVars === null || typeof userVars !== 'object' || Array.isArray( userVars ) ) {
+                messages.push( `Key "userVars" is not type object.` )
+            } else {
+                if( Object.keys( userVars ).length === 0 ) {
+                    messages.push( `Key "userVars" is empty.`)
+                }
+            }
         }
 
         if( messages.length === 0 ) {
+            // userVars
+            const struct = Object
+                .entries( this.#presets[ preset ]['input']['variables'] )
+                .reduce( ( acc, a, index ) => {
+                    const [ key, value ] = a 
+                    if( value['required'] ) {
+                        acc['required'].push( key )
+                    } else {
+                        acc['default'].push( key )
+                    }
+                    acc['all'].push( key)
+
+                    return acc
+                }, { 'required': [], 'default': [], 'all': [] } )
+
+            Object
+                .keys( userVars )
+                .map( key => {
+                    const test = struct['all'].includes( key )
+                    !test ?comments.push( `The key "${key}" in "userVars" is not known as valid input and will ignored.` ) : ''
+                } )
+
+            struct['default']
+                .forEach( key => {
+                    if( !Object.hasOwn( userVars, key ) ) {
+                        const d = this.#presets[ preset ]['input']['variables'][ key ]['default'][ this.#state['network'] ]
+                        comments.push( `The key "${key}" in "userVars" is not set, will use default parameter "${d}" instead.` )
+                    } else {
+                        const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
+                            .test( userVars[ key ] )
+
+                        if( !test ) {
+                            const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
+                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
+                        }  
+                    }
+                } )
+
+            struct['required']
+                .forEach( key => {
+                    if( !Object.hasOwn( userVars, key ) ) {
+                        messages.push( `The key "${key}" in "userVars" is missing.` )
+                    } else {
+                        const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
+                            .test( userVars[ key ] )
+
+                        if( !test ) {
+                            const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
+                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
+                        }   
+                    }
+
+                } )
+
+/*
             data = [ 'query', 'variables' ]
                 .reduce( ( acc, key, index ) => { 
                     switch( key ) {
@@ -435,7 +525,7 @@ export class MinaData extends EventTarget {
                                 .forEach( ( a ) => {
                                     const [ key, value ] = a
                                     if( Object.hasOwn( userVars, key ) ) {
-                                        if( value['regex'].test( userVars[ key ] ) ) {
+                                        if( value['validation']['regex'].test( userVars[ key ] ) ) {
                                             switch( value['type'] ) {
                                                 case 'number':
                                                     acc['variables'][ key ] = parseInt( userVars[ key ] )
@@ -444,13 +534,13 @@ export class MinaData extends EventTarget {
                                                     acc['variables'][ key ] = userVars[ key ]
                                             }
                                         } else {
-                                            messages.push( `userInput ${key}: ${userVars[ key ]} is not matching ${value['regex']}`)
+                                            messages.push( `Key "${key}" ${userVars[ key ]} is not matching ${value['validation']['regex']}. ${value['validation']['description']}`)
                                         }
                                     } else {
                                         if( value['required'] ) {
-                                            messages.push( `userInput ${key} is missing and required.` )
+                                            messages.push( `Key "${key}" is missing and required.` )
                                         } else {
-                                            comments.push( `userInput ${key} is missing, default "${value['default']}" will set instead.` )
+                                            comments.push( `Key "${key}" is missing, default "${value['default']}" will set instead.` )
                                             acc['variables'][ key ] = value['default']
                                         }
                                     }
@@ -462,7 +552,9 @@ export class MinaData extends EventTarget {
 
                     return acc
                 }, {} ) 
+*/
         }
+
 
         return [ messages, comments, data ]
     }

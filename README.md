@@ -20,7 +20,7 @@ index.mjs
 import { MinaData } from 'minadata'
 
 const minaData = new MinaData()
-minaData.setEnvironment( {
+minaData.init( {
     'network': 'berkeley'
 } )
 
@@ -102,7 +102,7 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
         import { MinaData } from 'https://unpkg.com/minadata@latest/dist/MinaData.js'
 
         const minaData = new MinaData()
-        minaData.setEnvironment( {
+        minaData.init( {
             'network': 'berkeley'
         } )
 
@@ -128,23 +128,6 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
 npx webpack --config webpack.config.js
 ```
 
-
-## Contributing
-
-Bug reports and pull requests are welcome on GitHub at https://github.com/easymina/minaData. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).
-
-## Limitations
-
-- Currently in Alpha Stage
-
-## Credits
-
-- This project is supported by the [zkIgnite](https://zkignite.minaprotocol.com) grant program.
-
 ## License
 
 The module is available as open source under the terms of the [Apache 2.0](https://github.com/EasyMina/minaData/blob/main/LICENSE).
-
-## Code of Conduct
-
-Everyone interacting in the EasyMina project's codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/EasyMina/minaData/blob/main/CODE_OF_CONDUCT.md).
