@@ -338,12 +338,12 @@ export const presets = {
         'blockHeight_lt': {
             'regex': /^(0|[1-9]\d{0,8})$/,
             'description': 'Allowed is only a non-negative integer up to 9 digits long, not starting with any zeros unless it is the number zero itself.',
-            'post': 'number'
+            'post': 'integer'
         },
         'limit': {
             'regex': /[0-9]{0,2}/,
             'description': 'Allowed is only a number up to two digits long, which can be any value from 0 to 99.',
-            'post': 'number'
+            'post': 'integer'
         },
         'minaPublicKey': {
             'regex': /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/,

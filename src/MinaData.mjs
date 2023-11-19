@@ -59,38 +59,9 @@ export class MinaData extends EventTarget {
     }
 
 
-    #setPresets( { presets } ) {
-        const [ messages, comments ] = this.#validatePresets( { presets } ) 
-        printMessages( { messages, comments } )
-
-        this.#presets = Object
-            .entries( presets['presets'] )
-            .reduce( ( acc, a, index ) => {
-                const [ key, value ] = a
-
-                acc[ key ] = value
-                acc[ key ]['input']['variables'] = Object
-                    .entries( acc[ key ]['input']['variables'] )
-                    .reduce( ( abb, b, rindex ) => {
-                        const [ _key, _value ] = b
-                        abb[ _key ] = _value
-                        abb[ _key ]['validation'] = keyPathToValue( { 
-                            'data': presets, 
-                            'keyPath': abb[ _key ]['validation']
-                        } )
-
-                        return abb
-                    }, {} )
-                return acc
-            }, {} )
-
-        return true
-    }
-
-
     async getData( { preset, userVars, subgroup='default' } ) {
         subgroup = `${subgroup}`
-        const [ messages, comments ] = this.#validateGetData( { preset, userVars } )
+        const [ messages, comments ] = this.validateGetData( { preset, userVars } )
         printMessages( { messages, comments } )
 
         const eventId = this.#state['nonce']
@@ -182,6 +153,122 @@ export class MinaData extends EventTarget {
     }
 
 
+    validateGetData( { preset, userVars } ) {
+        let messages = []
+        let comments = []
+        let data = null
+
+        const [ m, c ] = this.#validateGetPreset( { 'key': preset } )
+        messages.push( ...m )
+        comments.push( ...c )
+
+        if( messages.length === 0 ) {
+            const ps = this.getPreset( { 'key': preset } )
+            const type = ps['input']['query']['schema']
+
+            if( !Object.hasOwn( this.#config['network'][ this.#state['network'] ]['graphQl'], type ) ) {
+                messages.push( `Preset "${preset}" GraphQl type of "${type}" not known.` )
+            } else if( this.#config['network'][ this.#state['network'] ]['graphQl'][ type ].length === 0 ){
+                messages.push( `Preset is for network "${this.#state['network']}" not available.` )
+            }
+
+            if( userVars === null || typeof userVars !== 'object' || Array.isArray( userVars ) ) {
+                messages.push( `Key "userVars" is not type object.` )
+            } else {
+                if( Object.keys( userVars ).length === 0 ) {
+                    messages.push( `Key "userVars" is empty.`)
+                }
+            }
+        }
+
+        if( messages.length === 0 ) {
+            const struct = Object
+                .entries( this.#presets[ preset ]['input']['variables'] )
+                .reduce( ( acc, a, index ) => {
+                    const [ key, value ] = a 
+                    if( value['required'] ) {
+                        acc['required'].push( key )
+                    } else {
+                        acc['default'].push( key )
+                    }
+                    acc['all'].push( key)
+
+                    return acc
+                }, { 'required': [], 'default': [], 'all': [] } )
+
+            Object
+                .keys( userVars )
+                .map( key => {
+                    const test = struct['all'].includes( key )
+                    !test ?comments.push( `The key "${key}" in "userVars" is not known as valid input and will ignored.` ) : ''
+                } )
+
+            struct['default']
+                .forEach( key => {
+                    if( !Object.hasOwn( userVars, key ) ) {
+                        const d = this.#presets[ preset ]['input']['variables'][ key ]['default'][ this.#state['network'] ]
+                        comments.push( `The key "${key}" in "userVars" is not set, will use default parameter "${d}" instead.` )
+                    } else {
+                        const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
+                            .test( userVars[ key ] )
+
+                        if( !test ) {
+                            const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
+                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
+                        }  
+                    }
+                } )
+
+            struct['required']
+                .forEach( key => {
+                    if( !Object.hasOwn( userVars, key ) ) {
+                        messages.push( `The key "${key}" in "userVars" is missing.` )
+                    } else {
+                        const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
+                            .test( userVars[ key ] )
+
+                        if( !test ) {
+                            const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
+                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
+                        }   
+                    }
+                } )
+        }
+
+        return [ messages, comments, data ]
+    }
+
+
+
+    #setPresets( { presets } ) {
+        const [ messages, comments ] = this.#validatePresets( { presets } ) 
+        printMessages( { messages, comments } )
+
+        this.#presets = Object
+            .entries( presets['presets'] )
+            .reduce( ( acc, a, index ) => {
+                const [ key, value ] = a
+
+                acc[ key ] = value
+                acc[ key ]['input']['variables'] = Object
+                    .entries( acc[ key ]['input']['variables'] )
+                    .reduce( ( abb, b, rindex ) => {
+                        const [ _key, _value ] = b
+                        abb[ _key ] = _value
+                        abb[ _key ]['validation'] = keyPathToValue( { 
+                            'data': presets, 
+                            'keyPath': abb[ _key ]['validation']
+                        } )
+
+                        return abb
+                    }, {} )
+                return acc
+            }, {} )
+
+        return true
+    }
+
+
     #preparePayload( { preset, userVars } ) {
         this.#debug ? console.log( '' ) : ''
 
@@ -203,7 +290,7 @@ export class MinaData extends EventTarget {
                         case 'string':
                             acc[ key ] = `${userVars[ key ]}`
                             break
-                        case 'number':
+                        case 'integer':
                             acc[ key ] = parseInt( userVars[ key ] )
                             break
                         default:
@@ -427,137 +514,7 @@ export class MinaData extends EventTarget {
     }
 
 
-    #validateGetData( { preset, userVars } ) {
-        let messages = []
-        let comments = []
-        let data = null
-
-
-        const [ m, c ] = this.#validateGetPreset( { 'key': preset } )
-        messages.push( ...m )
-        comments.push( ...c )
-
-        if( messages.length === 0 ) {
-            const ps = this.getPreset( { 'key': preset } )
-            const type = ps['input']['query']['schema']
-
-            if( !Object.hasOwn( this.#config['network'][ this.#state['network'] ]['graphQl'], type ) ) {
-                messages.push( `Preset "${preset}" GraphQl type of "${type}" not known.` )
-            } else if( this.#config['network'][ this.#state['network'] ]['graphQl'][ type ].length === 0 ){
-                messages.push( `Preset is for network "${this.#state['network']}" not available.` )
-            }
-
-            if( userVars === null || typeof userVars !== 'object' || Array.isArray( userVars ) ) {
-                messages.push( `Key "userVars" is not type object.` )
-            } else {
-                if( Object.keys( userVars ).length === 0 ) {
-                    messages.push( `Key "userVars" is empty.`)
-                }
-            }
-        }
-
-        if( messages.length === 0 ) {
-            // userVars
-            const struct = Object
-                .entries( this.#presets[ preset ]['input']['variables'] )
-                .reduce( ( acc, a, index ) => {
-                    const [ key, value ] = a 
-                    if( value['required'] ) {
-                        acc['required'].push( key )
-                    } else {
-                        acc['default'].push( key )
-                    }
-                    acc['all'].push( key)
-
-                    return acc
-                }, { 'required': [], 'default': [], 'all': [] } )
-
-            Object
-                .keys( userVars )
-                .map( key => {
-                    const test = struct['all'].includes( key )
-                    !test ?comments.push( `The key "${key}" in "userVars" is not known as valid input and will ignored.` ) : ''
-                } )
-
-            struct['default']
-                .forEach( key => {
-                    if( !Object.hasOwn( userVars, key ) ) {
-                        const d = this.#presets[ preset ]['input']['variables'][ key ]['default'][ this.#state['network'] ]
-                        comments.push( `The key "${key}" in "userVars" is not set, will use default parameter "${d}" instead.` )
-                    } else {
-                        const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
-                            .test( userVars[ key ] )
-
-                        if( !test ) {
-                            const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
-                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
-                        }  
-                    }
-                } )
-
-            struct['required']
-                .forEach( key => {
-                    if( !Object.hasOwn( userVars, key ) ) {
-                        messages.push( `The key "${key}" in "userVars" is missing.` )
-                    } else {
-                        const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
-                            .test( userVars[ key ] )
-
-                        if( !test ) {
-                            const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
-                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
-                        }   
-                    }
-
-                } )
-
-/*
-            data = [ 'query', 'variables' ]
-                .reduce( ( acc, key, index ) => { 
-                    switch( key ) {
-                        case 'query':
-                            acc['query'] = this.#presets[ preset ]['input']['query']['cmd']
-                            break
-                        case 'variables':
-                            !Object.hasOwn( acc, key ) ? acc['variables'] = {} : ''
-                            Object
-                                .entries( this.#presets[ preset ]['input']['variables'] )
-                                .forEach( ( a ) => {
-                                    const [ key, value ] = a
-                                    if( Object.hasOwn( userVars, key ) ) {
-                                        if( value['validation']['regex'].test( userVars[ key ] ) ) {
-                                            switch( value['type'] ) {
-                                                case 'number':
-                                                    acc['variables'][ key ] = parseInt( userVars[ key ] )
-                                                    break
-                                                default:
-                                                    acc['variables'][ key ] = userVars[ key ]
-                                            }
-                                        } else {
-                                            messages.push( `Key "${key}" ${userVars[ key ]} is not matching ${value['validation']['regex']}. ${value['validation']['description']}`)
-                                        }
-                                    } else {
-                                        if( value['required'] ) {
-                                            messages.push( `Key "${key}" is missing and required.` )
-                                        } else {
-                                            comments.push( `Key "${key}" is missing, default "${value['default']}" will set instead.` )
-                                            acc['variables'][ key ] = value['default']
-                                        }
-                                    }
-                                } )
-                            break
-                        default:
-                            break
-                    }
-
-                    return acc
-                }, {} ) 
-*/
-        }
-
-
-        return [ messages, comments, data ]
-    }
+    
 
 
     #dispatchSubgroupEvent( { subgroup, status, data } ) {

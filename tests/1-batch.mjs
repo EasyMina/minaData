@@ -1,4 +1,4 @@
-import { MinaData } from './src/MinaData.mjs'
+import { MinaData } from './../src/MinaData.mjs'
 import fs from 'fs'
 
 
