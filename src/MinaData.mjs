@@ -296,7 +296,6 @@ export class MinaData extends EventTarget {
                         default:
                             console.log( 'Something went wrong.' )
                     }
-                    
                 } else {
                     acc[ key ] = variable['default'][ network ]
                 }
