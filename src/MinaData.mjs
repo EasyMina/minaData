@@ -29,7 +29,7 @@ export class MinaData extends EventTarget {
     }
 
 
-    init( { network } ) {
+    init( { network="berkeley" } ) {
         const [ messages, comments ] = this.#validateInit( { network } )
         printMessages( { messages, comments } )
 
@@ -59,9 +59,9 @@ export class MinaData extends EventTarget {
     }
 
 
-    async getData( { preset, userVars, subgroup='default' } ) {
+    async getData( { preset, userVars, subgroup='default', network } ) {
         subgroup = `${subgroup}`
-        const [ messages, comments ] = this.validateGetData( { preset, userVars } )
+        const [ messages, comments ] = this.validateGetData( { preset, userVars, network } )
         printMessages( { messages, comments } )
 
         const eventId = this.#state['nonce']
@@ -153,7 +153,7 @@ export class MinaData extends EventTarget {
     }
 
 
-    validateGetData( { preset, userVars } ) {
+    validateGetData( { preset, userVars, network } ) {
         let messages = []
         let comments = []
         let data = null
@@ -164,6 +164,14 @@ export class MinaData extends EventTarget {
 
         if( messages.length === 0 ) {
             const ps = this.getPreset( { 'key': preset } )
+
+            const validNetworks = Object
+                .keys( ps['input']['variables'][ Object.keys( ps['input']['variables'] )[ 0 ] ]['default'] )
+
+            if( !validNetworks.includes( network ) ) {
+                messages.push( `Network "${network}" is not known.` )
+            }
+
             const type = ps['input']['query']['schema']
 
             if( !Object.hasOwn( this.#config['network'][ this.#state['network'] ]['graphQl'], type ) ) {

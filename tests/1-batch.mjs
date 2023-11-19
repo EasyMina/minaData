@@ -4,9 +4,7 @@ import fs from 'fs'
 
 const minaData = new MinaData()
 
-minaData.init( {
-    'network': 'berkeley'
-} )
+minaData.init( {} )
 
 const presets = minaData
     .getPresets()
@@ -30,7 +28,8 @@ for( const key of presets ) {
     // console.log( 'vars', vars )
     const result = await minaData.getData( { 
         'preset': key, 
-        userVars 
+        userVars,
+        'network': 'berkeley'
     } )
 
     results.push( result )

@@ -28,7 +28,8 @@ minaData.getData( {
     'preset': 'transactionByHash', 
     'userVars': {
         'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
-    } 
+    },
+    'network': 'berkeley'
 } )
 ```
 
@@ -76,7 +77,8 @@ minaData.getData( {
     'preset': ' latestEventsFromContract',
     'userVars': {
         'creator': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM'
-    }
+    },
+    'network': 'berkeley'
 })
 ```
 
@@ -98,16 +100,14 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
         import { MinaData } from 'https://unpkg.com/minadata@latest/dist/MinaData.js'
 
         const minaData = new MinaData()
-        minaData.init( {
-            'network': 'berkeley'
-        } )
-
+        minaData.init( {} )
         minaData
             .getData( {
                 'preset': 'transactionByHash',
                 'userVars': {
                     'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
-                }
+                },
+                'network': 'berkeley'
             } )
             .then( result => {
                 console.log( `Here is the result ${JSON.stringify( result )}` )

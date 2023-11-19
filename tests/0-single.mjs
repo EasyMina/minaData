@@ -4,9 +4,7 @@ import fs from 'fs'
 
 const minaData = new MinaData()
 
-minaData.init( {
-    'network': 'berkeley'
-} )
+minaData.init( {} )
 
 
 const presets = minaData
@@ -27,7 +25,8 @@ const userVars = Object
 // userVars['senderAddress'] = 23
 const response = await minaData.getData( {
     'preset': key,
-    'userVars': userVars
+    'userVars': userVars,
+    'network': 'berkeley'
 } )
 
 console.log( '>', JSON.stringify( response, null, 4 ))
