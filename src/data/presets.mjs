@@ -346,7 +346,7 @@ export const presets = {
             'post': 'integer'
         },
         'minaPublicKey': {
-            'regex': /^B62[1-9A-HJ-NP-Za-km-z]{0,}$/,
+            'regex': /^B62[1-9A-HJ-NP-Za-km-z]{52}$/,
             'description': 'Allowed is only a string that starts with \'B62\' followed by a sequence of base58 characters, with no specified maximum length.',
             'post': 'string'
         },

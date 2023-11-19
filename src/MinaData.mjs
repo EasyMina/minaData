@@ -349,7 +349,7 @@ export class MinaData extends EventTarget {
         const keys = this.getPresets()
         if( !keys.includes( key ) ) {
             
-            messages.push( `Key "key" with value "${key}" not a valid preset key. Use ${keys.join( ', ' )} instead.` )
+            messages.push( `Key "key/preset" with value "${key}" not a valid preset key. Use ${keys.join( ', ' )} instead.` )
         }
 
         return [ messages, comments ]
