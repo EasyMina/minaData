@@ -38,11 +38,7 @@ minaData.getData( {
 1. [Quickstart](#quickstart)<br>
 2. [Presets](#presets)
 3. [How to Use MinaData in HTML]()
-4. [Contributing](#contributing)<br>
-5. [Limitations](#limitations)<br>
-6. [Credits](#credits)<br>
-7.  [License](#license)<br>
-8.  [Code of Conduct](#code-of-conduct)<br>
+4.  [License](#license)<br>
 
 ## Presets
 
