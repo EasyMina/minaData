@@ -1,6 +1,6 @@
 {
   "name": "minadata",
-  "version": "0.0.85",
+  "version": "0.0.91",
   "description": "MinaData simplifies the retrieval of transaction data on the Mina blockchain. In doing so, it directly fetches data through the native GraphQL interfaces of the Archive Node. MinaData aims to assist you in quickly launching user interfaces.",
   "main": "src/MinaData.mjs",
   "directories": {
@@ -19,5 +19,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "node-fetch": "^3.3.2"
   }
 }

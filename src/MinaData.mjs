@@ -12,6 +12,7 @@
 
 import { presets as pre } from './data/presets.mjs'
 import { keyPathToValue, printMessages } from './helpers/mixed.mjs'
+import fetch from 'node-fetch'
 
 import { config } from './data/config.mjs'
 
