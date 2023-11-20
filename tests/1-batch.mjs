@@ -8,8 +8,6 @@ minaData.init( {} )
 
 const presets = minaData
     .getPresets()
-// console.log( 'presets', presets )
-
 
 const results = []
 for( const key of presets ) {
@@ -22,15 +20,14 @@ for( const key of presets ) {
             return acc
         }, {} )
 
-    console.log( 'key', key )
-    console.log( 'userVars', userVars )
-    // console.log( 'preset', preset)
-    // console.log( 'vars', vars )
     const result = await minaData.getData( { 
         'preset': key, 
         userVars,
         'network': 'berkeley'
     } )
+
+    console.log( `${key}`)
+    console.log( `  Code: ${result['status']['code']}   Message: ${result['status']['text']}` )
 
     results.push( result )
 }

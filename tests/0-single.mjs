@@ -4,7 +4,7 @@ import fs from 'fs'
 
 const minaData = new MinaData()
 
-minaData.init( {} )
+minaData.init({})
 
 
 const presets = minaData
@@ -22,7 +22,7 @@ const userVars = Object
     }, {} )
 
 console.log( userVars )
-userVars['publicKey'] = 'B62qnEdPB1V5YPEcGaETb19naLJV6sWdveCZEjSLhcVyrPcPWHkGGjk'
+// userVars['publicKey'] = 'B62qnEdPB1V5YPEcGaETb19naLJV6sWdveCZEjSLhcVyrPcPWHkGGjk'
 // userVars['senderAddress'] = 23
 const response = await minaData.getData( {
     'preset': key,

@@ -9,6 +9,7 @@ export const config = {
         'singleMaxInSeconds': 30
     },
     'network': {
+        'default': 'berkeley',
         'berkeley': {
             'explorer': {
                 'transaction': 'https://berkeley.minaexplorer.com/transaction/',

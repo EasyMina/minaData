@@ -9,13 +9,14 @@
     Please read the full Apache License 2.0 for more details on your rights and responsibilities regarding the usage of this code.
 */
 
+
 import { presets as pre } from './data/presets.mjs'
 import { keyPathToValue, printMessages } from './helpers/mixed.mjs'
 
 import { config } from './data/config.mjs'
 
 
-export class MinaData extends EventTarget {
+export class MinaData /*extends EventTarget*/ {
     #config
     #debug
     #state
@@ -23,13 +24,15 @@ export class MinaData extends EventTarget {
 
 
     constructor( debug=false ) {
-        super()
+        // super()
         this.#debug = debug
         this.#config = config
+        return true
     }
 
 
-    init( { network="berkeley" } ) {
+    init( { network } ) {
+        network === undefined ? network = this.#config['network']['default'] : ''
         const [ messages, comments ] = this.#validateInit( { network } )
         printMessages( { messages, comments } )
 
@@ -61,6 +64,7 @@ export class MinaData extends EventTarget {
 
     async getData( { preset, userVars, subgroup='default', network } ) {
         subgroup = `${subgroup}`
+        const startTime = performance.now()
         const [ messages, comments ] = this.validateGetData( { preset, userVars, network } )
         printMessages( { messages, comments } )
 
@@ -68,32 +72,20 @@ export class MinaData extends EventTarget {
         this.#state['nonce']++
 
         if( !Object.hasOwn( this.#state['subgroups'], subgroup ) ) {
-            this.#state['subgroups'][ subgroup ] = {
-                'time': performance.now(),
-                'ids': {}
-            }
-
-            this.#dispatchSubgroupEvent( { 
-                subgroup, 
-                'status': 'started',
-                'data': null
-            } )
+            this.#state['subgroups'][ subgroup ] = { startTime, 'ids': {} }
         } 
-
         this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = -1
 
-        let payload = this.#preparePayload( { preset, userVars } )
-        this.#dispatchSingleDataEvent( {
-            'eventId': eventId,
-            'preset': preset,
-            'status': 'started',
-            'subgroup': subgroup,
-            'data': null
-        } )
-
-        let result = null
+        const result = {
+            'data': null,
+            'status': {
+                'code': null,
+                'text': null
+            }
+        }
+        
         try {
-            const startTime = performance.now()
+            let payload = this.#preparePayload( { preset, userVars } )
             const response = await fetch(
                 payload['fetch']['url'], 
                 {
@@ -103,53 +95,63 @@ export class MinaData extends EventTarget {
                 }
             )
     
-            result = await response.json()
-            const endTime = performance.now()
-            const executionTime = endTime - startTime
-    
-            this.#dispatchSingleDataEvent( {
-                'eventId': eventId,
-                'preset': preset,
-                'status': `success (${Math.floor( executionTime ) } ms)`,
-                'subgroup': subgroup,
-                'data': JSON.stringify( result )
-            } )
-
+            const tmp = await response.json()
+            const [ m, c ] = this.#validateGetDataResponse( { 'data': tmp['data'], preset } )
+            result['data'] = tmp['data']
             this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = 1
+
+            if( m.length === 0 ) {
+                result['status']['code'] = 200
+                result['status']['text'] = `Success (${Math.floor(performance.now() - startTime)} ms)!`
+            } else {
+                result['status']['code'] = 404
+                result['status']['text'] = `Data not found (${Math.floor(performance.now() - startTime)} ms)!`
+            }
+
         } catch( e ) {
             console.log( `Following error occured: ${e}` )
-            this.#dispatchSingleDataEvent( {
-                'eventId': eventId,
-                'preset': preset,
-                'status': `failed!`,
-                'subgroup': subgroup,
-                'data': null
-            } )
-            this.#state['subgroups'][ subgroup ]['ids'][ eventId ] = 0
+            result['status']['code'] = 400
+            result['status']['text'] = `Error (${Math.floor( performance.now() - startTime)} ms): ${e}`
         }
 
-        const subgroupStatus = Object
-            .entries( this.#state['subgroups'][ subgroup ]['ids'] )
-            .every( ( [ key, value ] ) => { return ( value !== -1 ) } )
-        
-        if( subgroupStatus ) {
-            const success = Object
-                .entries( this.#state['subgroups'][ subgroup ]['ids'] )
-                .every( ( [ key, value ] ) => { return ( value === 1 ) } )
+        return result
+    }
 
-            const _endTime = performance.now()
-            const _executionTime = Math.floor( _endTime - this.#state['subgroups'][ subgroup ]['time'] )
 
-            this.#dispatchSubgroupEvent( { 
-                subgroup, 
-                'status': ( success ) ? `success! (${_executionTime} ms)` : 'failed!',
-                'data': JSON.stringify( this.#state['subgroups'][ subgroup ]['ids'] )
-            } )
-        } else {
-            console.log( 'outsude')
+    #validateGetDataResponse( { preset, data } ) {
+        const messages = []
+        const comments = []
+
+        const pre = this.getPreset( { 'key': preset } )
+
+        const search = pre['expect']['key']
+        if( !Object.hasOwn( data, search ) ) {
+            messages.push( `Response does not include "${search}" as a key.` )
+            return messages
         }
 
-        return [ eventId, result ]
+        const type = pre['expect']['type']
+        switch( type ) {
+            case 'hash':
+                if( 
+                    typeof data[ search ] === 'object' && 
+                    !Array.isArray( data[ search ] ) 
+                ) {
+                } else {
+                    messages.push( `Response does not include expected type of "${type}"` )
+                }
+                break
+            case 'array':
+                if( Array.isArray( data[ search ] ) ) {
+                } else {
+                    messages.push( `Response does not include expected type of "${type}"` )
+                }
+                break
+            default:
+                break
+        }
+
+        return [ messages, comments ]
     }
 
 
@@ -251,7 +253,6 @@ export class MinaData extends EventTarget {
     #setPresets( { presets } ) {
         const [ messages, comments ] = this.#validatePresets( { presets } ) 
         printMessages( { messages, comments } )
-
         this.#presets = Object
             .entries( presets['presets'] )
             .reduce( ( acc, a, index ) => {
@@ -263,6 +264,7 @@ export class MinaData extends EventTarget {
                     .reduce( ( abb, b, rindex ) => {
                         const [ _key, _value ] = b
                         abb[ _key ] = _value
+
                         abb[ _key ]['validation'] = keyPathToValue( { 
                             'data': presets, 
                             'keyPath': abb[ _key ]['validation']
@@ -430,20 +432,22 @@ export class MinaData extends EventTarget {
                         messages.push( `["${presetKey}"]["input"]["variables"]["${key}"] should be type of object.` )
                     } else {
                         const test = [
-    /*
+/*
                             [
                                 !validateStructure( variable, 'default', 'string' ),
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["default"] should be type of string.`
                             ],
-    */
+*/
                             [
                                 !validateStructure( variable, 'description', 'string' ),
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["description"] should be type of string.`
                             ],
+/*
                             [
                                 !validateStructure( variable, 'validation', 'string' ),
-                                `["${presetKey}"]["input"]["variables"]["${key}"]["regex"] should be type of string.`
+                                `["${presetKey}"]["input"]["variables"]["${key}"]["validation"] should be type of string. And contains a reference to a regex.`
                             ],
+*/
                             [
                                 !validateStructure( variable, 'required', 'boolean' ),
                                 `["${presetKey}"]["input"]["variables"]["${key}"]["required"] should be type of boolean.`
@@ -520,10 +524,7 @@ export class MinaData extends EventTarget {
         return [ messages, comments ]
     }
 
-
-    
-
-
+/*
     #dispatchSubgroupEvent( { subgroup, status, data } ) {
         const event = new CustomEvent(
             this.#config['event']['subgroup'],
@@ -533,8 +534,8 @@ export class MinaData extends EventTarget {
 
         return true
     }
-
-
+*/
+/*
     #dispatchSingleDataEvent( { eventId, preset, status, subgroup, data } ) {
         const event = new CustomEvent(
             this.#config['event']['singleFetch'],
@@ -543,4 +544,5 @@ export class MinaData extends EventTarget {
         this.dispatchEvent( event )
         return true
     }
+*/
 }
