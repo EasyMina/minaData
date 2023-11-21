@@ -13,7 +13,7 @@ const result = await minaData.getData( {
 
 try {
     const test = 'B62qmKTWum3TYe3HSDKCK6NWkMhNyjPJbwCD6HuD3ypvSWw5drL8D1x'
-    if( result[ 1 ]['data']['transaction']['to'] === test ) {
+    if( result['data']['transaction']['to'] === test ) {
         console.log( `Success! data.transaction.to === "${test}"` )
         process.exit( 0 )
     } else {

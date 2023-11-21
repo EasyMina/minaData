@@ -18,7 +18,7 @@ export const presets = {
                     },
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'account',
                 'type': 'hash'
             }
@@ -57,7 +57,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'transactions',
                 'type': 'array'
             }
@@ -96,7 +96,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'transactions',
                 'type': 'array'
             }
@@ -143,7 +143,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'transactions',
                 'type': 'array'
             }
@@ -166,7 +166,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'transaction',
                 'type': 'hash'
             }
@@ -189,7 +189,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'block',
                 'type': 'hash'
             }            
@@ -212,7 +212,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'blocks',
                 'type': 'array'
             }
@@ -251,7 +251,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'transactions',
                 'type': 'array' 
             }
@@ -274,7 +274,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'event',
                 'type': 'hash'
             }
@@ -313,7 +313,7 @@ export const presets = {
                     }
                 }
             },
-            'expect': {
+            'output': {
                 'key': 'events',
                 'type': 'array'
             }

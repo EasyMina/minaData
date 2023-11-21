@@ -125,13 +125,13 @@ export class MinaData /*extends EventTarget*/ {
 
         const pre = this.getPreset( { 'key': preset } )
 
-        const search = pre['expect']['key']
+        const search = pre['output']['key']
         if( !Object.hasOwn( data, search ) ) {
             messages.push( `Response does not include "${search}" as a key.` )
             return messages
         }
 
-        const type = pre['expect']['type']
+        const type = pre['output']['type']
         switch( type ) {
             case 'hash':
                 if( 
@@ -385,7 +385,7 @@ export class MinaData /*extends EventTarget*/ {
                     `["${presetKey}"]["input"] should be type of object.`
                 ],
                 [
-                    !validateStructure( presetValue, 'expect', 'object' ),
+                    !validateStructure( presetValue, 'output', 'object' ),
                     `["${presetKey}"]["expect"] should be type of object.`
                 ]
             ]
@@ -469,11 +469,11 @@ export class MinaData /*extends EventTarget*/ {
         if( messages.length === 0 ) {
             const n = [
                 [
-                    !validateStructure( presetValue['expect'], 'key', 'string' ),
+                    !validateStructure( presetValue['output'], 'key', 'string' ),
                     `["${presetKey}"]["expect"]["key"] should be type of string.`
                 ],
                 [
-                    !validateStructure( presetValue['expect'], 'type', 'string' ),
+                    !validateStructure( presetValue['output'], 'type', 'string' ),
                     `["${presetKey}"]["expect"]["type"] should be type of string.`
                 ]
             ]
