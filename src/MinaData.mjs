@@ -186,9 +186,22 @@ export class MinaData /*extends EventTarget*/ {
             if( userVars === null || typeof userVars !== 'object' || Array.isArray( userVars ) ) {
                 messages.push( `Key "userVars" is not type object.` )
             } else {
+
+                console.log( 'ps' )
+
+/*
+                const requiredVariables = Object
+                    .entries( ps['input']['variables'] )
+                    .map( a => [ a[ 0 ], a[ 1 ]['required'] ] )
+                    .filter( a => a[ 1 ] )
+
                 if( Object.keys( userVars ).length === 0 ) {
-                    messages.push( `Key "userVars" is empty.`)
+                    console.log( 'here', requiredVariables )
+                    if( !requiredVariables.some( a => a[ 1 ] ) ) {
+                        messages.push( `Required keys ${requiredVariables.map( a => a[ 0 ] ).join( ',' )} are missing.` )
+                    }
                 }
+*/
             }
         }
 
