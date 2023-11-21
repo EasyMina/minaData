@@ -224,21 +224,21 @@ export class MinaData /*extends EventTarget*/ {
                 .keys( userVars )
                 .map( key => {
                     const test = struct['all'].includes( key )
-                    !test ?comments.push( `The key "${key}" in "userVars" is not known as valid input and will ignored.` ) : ''
+                    !test ?comments.push( `The key "${key}" is not known as valid input and will ignored.` ) : ''
                 } )
 
             struct['default']
                 .forEach( key => {
                     if( !Object.hasOwn( userVars, key ) ) {
                         const d = this.#presets[ preset ]['input']['variables'][ key ]['default'][ this.#state['network'] ]
-                        comments.push( `The key "${key}" in "userVars" is not set, will use default parameter "${d}" instead.` )
+                        comments.push( `The key "${key}" is not set, will use default parameter "${d}" instead.` )
                     } else {
                         const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
                             .test( userVars[ key ] )
 
                         if( !test ) {
                             const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
-                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
+                            messages.push( `The key "${key}" with the value "${userVars[ key ]} is not valid. ${msg}`)
                         }  
                     }
                 } )
@@ -246,14 +246,14 @@ export class MinaData /*extends EventTarget*/ {
             struct['required']
                 .forEach( key => {
                     if( !Object.hasOwn( userVars, key ) ) {
-                        messages.push( `The key "${key}" in "userVars" is missing.` )
+                        messages.push( `The key "${key}" is missing.` )
                     } else {
                         const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
                             .test( userVars[ key ] )
 
                         if( !test ) {
                             const msg = this.#presets[ preset ]['input']['variables'][ key ]['validation']['description']
-                            messages.push( `The key "${key}" in "userVars" with the value "${userVars[ key ]} is not valid. ${msg}`)
+                            messages.push( `The key "${key}" with the value "${userVars[ key ]} is not valid. ${msg}`)
                         }   
                     }
                 } )
