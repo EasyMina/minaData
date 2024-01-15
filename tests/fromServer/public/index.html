@@ -22,20 +22,6 @@
         <input type="submit" value="Submit">
     </form>
 
-    <h1>Event: subgroup</h1>
-    <div id="subgroup">
-        <table id="subgroupTable">
-            <thead>
-            <tr>
-                <th>Subgroup</th>
-                <th>Status</th>
-                <th>Data</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table> 
-    </div>
-
     <h1>Event: status</h1>
     <div class="table-container">
         <table id="eventTable">
@@ -108,7 +94,7 @@
                             const inputElement = document.createElement( 'input' )
                             const tmp = [ 
                                 [ 'type', 'text'], [ 'id', key ], 
-                                [ 'name', key ], [ 'value', value['default'] ], 
+                                [ 'name', key ], [ 'value', value['default']['berkeley'] ], 
                                 [ 'required', true ] 
                                 /* ,[ 'pattern', value['regex'] */
                             ]
@@ -151,9 +137,12 @@
 
             #addSubmitButton() {
                 var form = document.getElementById( 'hashForm' )
+                let index = 0
                 form.addEventListener(
                     'submit', 
-                    ( event ) => {
+                    async ( event ) => {
+                        const id = index
+                        index++
                         // Prevent the default form submission behavior, which would reload the page
                         event.preventDefault()
 
@@ -170,7 +159,14 @@
                         const key = selectElement.options[ selectElement.selectedIndex ].value
                         const subgroup = document.getElementById( 'subgroup' ).value
 
-                        minaData.getData( { 'preset': key, userVars, subgroup } )
+                        this.addEventRow( { 'columns':[ id, key, subgroup, 'sended', ''] } )
+
+
+                        const response = await minaData.getData( { 'preset': key, userVars, subgroup } )
+
+                        this.addEventRow( { 'columns':[ id, key, subgroup, 'sended', JSON.stringify( response ) ] } )
+                        console.log( 'Response', response )
+                        console.log( 'Subgroup', subgroup )
                 } )
             }
 
@@ -216,14 +212,13 @@
         }
 
 
-        import { MinaData } from './MinaData.mjs'
-        // import { MinaData } from './dist/MinaData.js'
+        // import { MinaData } from './MinaData.mjs'
+        import { MinaData } from './dist/MinaData.js'
         // import { MinaData } from 'https://unpkg.com/minadata@latest/dist/MinaData.js'
 
         let debug = true
-        var minaData = new MinaData( debug )
-        minaData.init( {
-            'network': 'berkeley'
+        var minaData = new MinaData( {
+            'networkName': 'berkeley' 
         } )
 
         const userInterface = new UserInterface()
@@ -242,7 +237,6 @@
                 'subgroup', 
                 ( subgroup ) => { 
                     userInterface.addSubgroupRow( { 'columns': subgroup.detail } )
-                    console.log( '>>>', event )
                 }
             )
 

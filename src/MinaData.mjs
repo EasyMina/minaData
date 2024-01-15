@@ -12,36 +12,64 @@
 
 import { presets as pre } from './data/presets.mjs'
 import { keyPathToValue, printMessages } from './helpers/mixed.mjs'
-import fetch from 'node-fetch'
+// import fetch from 'node-fetch'
+
 
 import { config } from './data/config.mjs'
 
+/*
+async function getFetch() {
+    const globalFetch = globalThis.fetch;
+  
+    const isNodeEnv = typeof global !== 'undefined';
+  
+    // do nothing if `fetch` exists
+    if (globalFetch) {
+      return globalFetch;
+    } else if (isNodeEnv) {
+      // get node polyfill
+      return import('node-fetch').then((d) => d.default);
+    } else {
+      // get browser polyfill
+      return import('whatwg-fetch').then((d) => d.fetch);
+    }
+  }
+*/
 
 export class MinaData /*extends EventTarget*/ {
     #config
     #debug
     #state
     #presets
+    #provider
 
 
-    constructor( debug=false ) {
+    constructor( { debug=true, networkName, graphQl } ) {
         // super()
         this.#debug = debug
         this.#config = config
+
+        this.#init( { networkName, graphQl } )
+
         return true
     }
 
 
-    init( { network } ) {
-        network === undefined ? network = this.#config['network']['default'] : ''
-        const [ messages, comments ] = this.#validateInit( { network } )
+    #init( { networkName, graphQl } ) {
+        const [ messages, comments ] = this.#validateInit( { networkName, graphQl } )
         printMessages( { messages, comments } )
+
+
+        this.#provider = JSON.parse( JSON.stringify( this.#config['network'][ networkName ] ) ) 
+        if( graphQl !== undefined ) {
+            this.#provider['graphQl'] = graphQl
+        }
 
         this.#state = {
             'environment': true,
             'nonce': 0,
             'subgroups': {},
-            'network': network
+            networkName
         }
 
         this.#setPresets( { 'presets': pre } )
@@ -63,10 +91,10 @@ export class MinaData /*extends EventTarget*/ {
     }
 
 
-    async getData( { preset, userVars, subgroup='default', network } ) {
+    async getData( { preset, userVars, subgroup='default' } ) {
         subgroup = `${subgroup}`
         const startTime = performance.now()
-        const [ messages, comments ] = this.validateGetData( { preset, userVars, network } )
+        const [ messages, comments ] = this.validateGetData( { preset, userVars } )
         printMessages( { messages, comments } )
 
         const eventId = this.#state['nonce']
@@ -87,6 +115,8 @@ export class MinaData /*extends EventTarget*/ {
         
         try {
             let payload = this.#preparePayload( { preset, userVars } )
+
+            // const fetch = await getFetch()
             const response = await fetch(
                 payload['fetch']['url'], 
                 {
@@ -95,7 +125,7 @@ export class MinaData /*extends EventTarget*/ {
                     'body': payload['fetch']['data']
                 }
             )
-    
+
             const tmp = await response.json()
             const [ m, c ] = this.#validateGetDataResponse( { 'data': tmp['data'], preset } )
             result['data'] = tmp['data']
@@ -156,7 +186,7 @@ export class MinaData /*extends EventTarget*/ {
     }
 
 
-    validateGetData( { preset, userVars, network } ) {
+    validateGetData( { preset, userVars } ) {
         let messages = []
         let comments = []
         let data = null
@@ -167,27 +197,25 @@ export class MinaData /*extends EventTarget*/ {
 
         if( messages.length === 0 ) {
             const ps = this.getPreset( { 'key': preset } )
-
+/*
             const validNetworks = Object
                 .keys( ps['input']['variables'][ Object.keys( ps['input']['variables'] )[ 0 ] ]['default'] )
 
             if( !validNetworks.includes( network ) ) {
                 messages.push( `Network "${network}" is not known.` )
             }
-
+*/
             const type = ps['input']['query']['schema']
 
-            if( !Object.hasOwn( this.#config['network'][ this.#state['network'] ]['graphQl'], type ) ) {
+            if( !Object.hasOwn( this.#provider['graphQl'], type ) ) {
                 messages.push( `Preset '${preset}' GraphQl type of '${type}' not known.` )
-            } else if( this.#config['network'][ this.#state['network'] ]['graphQl'][ type ].length === 0 ){
-                messages.push( `Preset is for network '${this.#state['network']}' not available.` )
+            } else if( this.#provider['graphQl'][ type ].length === 0 ){
+                messages.push( `Preset is for network '${this.#state['networkName']}' not available.` )
             }
 
             if( userVars === null || typeof userVars !== 'object' || Array.isArray( userVars ) ) {
                 messages.push( `Key 'userVars' is not type object.` )
             } else {
-
-                console.log( 'ps' )
 
 /*
                 const requiredVariables = Object
@@ -230,7 +258,7 @@ export class MinaData /*extends EventTarget*/ {
             struct['default']
                 .forEach( key => {
                     if( !Object.hasOwn( userVars, key ) ) {
-                        const d = this.#presets[ preset ]['input']['variables'][ key ]['default'][ this.#state['network'] ]
+                        const d = this.#presets[ preset ]['input']['variables'][ key ]['default'][ this.#state['networkName'] ]
                         comments.push( `The key '${key}' is not set, will use default parameter '${d}' instead.` )
                     } else {
                         const test = this.#presets[ preset ]['input']['variables'][ key ]['validation']['regex']
@@ -299,8 +327,8 @@ export class MinaData /*extends EventTarget*/ {
         const ps = this.getPreset( { 'key': preset } )
         const type = ps['input']['query']['schema']
 
-        const network = this.#state['network']
-        const url = this.#config['network'][ network ]['graphQl'][ type ][ 0 ]
+        const network = this.#state['networkName']
+        const url = this.#provider['graphQl'][ type ][ 0 ]
 
         const data = {}
         data['query'] = this.#presets[ preset ]['input']['query']['cmd']
@@ -343,17 +371,43 @@ export class MinaData /*extends EventTarget*/ {
     }
 
 
-    #validateInit( { network } ) {
+    #validateInit( { networkName, graphQl } ) {
         const messages = []
         const comments = []
 
         const networks = Object
             .keys( this.#config['network'] )
 
-        if( !networks.includes( network ) ) {
-            messages.push( `Network "${network}" does not exist.` )
+        if( networkName === undefined ) {
+            messages.push( `Key 'networkName' is type of 'undefined'.` )
+        } else if( typeof networkName !== 'string' ) {
+            messages.push( `Key 'networkName' is not type of 'string'.` )
+        } else if( !networks.includes( networkName ) ) {
+            messages.push( `Key 'networkName' with the value '${networkName}' in not valid. Choose from ${networks.map( a => `'${a}'`).join(', ') } instead.` )
         }
 
+        if( graphQl === undefined ) {
+            // messages.push( `Key 'graphQl' is type of 'undefined'.` )
+        } else if( graphQl.constructor !== Object ) {
+            messages.push( `Key 'graphQl' with the value '${graphQl}' is not type of 'object'.` )
+        } else if( !Object.keys( graphQl ).includes( 'proxy') || !Object.keys( graphQl ).includes( 'standard') ) {
+            messages.push( `Key 'graphQl' with the keys ${Object.keys( graphQl).map( a => `'${a}'`).join( ', ' )} missing 'standard' and/or 'proxy'.` )
+        } else if( !Array.isArray( graphQl['proxy'] ) || !Array.isArray( graphQl['standard'] ) ) {
+            messages.push( `Key 'graphQl' with the keys 'standard' and 'proxy' are not type of array.` )
+        } else if( graphQl['proxy'].length === 0 || !graphQl['standard'].length === 0 ) {
+            messages.push( `Key 'graphQl' with the keys 'standard' and 'proxy' is empty.` )
+        } else if( 
+            !graphQl['proxy'].map( a => typeof a === 'string' ).every( a => a )
+            || !graphQl['standard'].map( a => typeof a === 'string' ).every( a => a )
+        ) {
+            messages.push( `Key 'graphQl' with the keys 'standard' and 'proxy' are not type of 'array of strings'.` )
+        } else if( 
+            !graphQl['proxy'].map( a => a.startsWith( 'https://' ) ).every( a => a )
+            || !graphQl['standard'].map( a => a.startsWith( 'https://' ) ).every( a => a )
+        ) {
+            messages.push( `Key 'graphQl' with the keys 'standard' and 'proxy' are not type of 'array of url strings'.` )
+        }
+        
         return [ messages, comments ]
     }
 
@@ -428,7 +482,7 @@ export class MinaData /*extends EventTarget*/ {
 
                         if( key === 'schema' ) {
                             const k = Object
-                                .keys( this.#config['network'][ this.#state['network'] ]['graphQl'] )
+                                .keys( this.#provider['graphQl'] )
 
                             if( !k.includes( presetValue['input']['query'][ key ] ) ) { 
                                 messages.push( `["${presetKey}"]["input"]["query"]["${key}"] value is not accepted. Use ${k.join( ', ' )} instead.`) 

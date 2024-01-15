@@ -19,17 +19,22 @@ index.mjs
 ```js
 import { MinaData } from 'minadata'
 
-const minaData = new MinaData()
-minaData.init( {
-    'network': 'berkeley'
+const minaData = new MinaData( {
+    'networkName': 'berkeley'
+/*
+    'graphQl': {
+        'proxy': [ 'https://proxy.berkeley.minaexplorer.com/' ],
+        'standard': [ 'https://berkeley.graphql.minaexplorer.com' ],
+    }
+*/
 } )
+
 
 minaData.getData( { 
     'preset': 'transactionByHash', 
     'userVars': {
         'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
-    },
-    'network': 'berkeley'
+    }
 } )
 ```
 
@@ -77,8 +82,7 @@ minaData.getData( {
     'preset': ' latestEventsFromContract',
     'userVars': {
         'creator': 'B62qnLVz8wM7MfJsuYbjFf4UWbwrUBEL5ZdawExxxFhnGXB6siqokyM'
-    },
-    'network': 'berkeley'
+    }
 })
 ```
 
@@ -99,15 +103,16 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
     <script type="module">
         import { MinaData } from 'https://unpkg.com/minadata@latest/dist/MinaData.js'
 
-        const minaData = new MinaData()
-        minaData.init( {} )
+        const minaData = new MinaData( {
+            'networkName': 'berkeley'
+        } )
+
         minaData
             .getData( {
                 'preset': 'transactionByHash',
                 'userVars': {
                     'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
-                },
-                'network': 'berkeley'
+                }
             } )
             .then( result => {
                 console.log( `Here is the result ${JSON.stringify( result )}` )
@@ -121,7 +126,7 @@ Please visit [https://easymina.github.io/minadata](https://easymina.github.io/mi
 
 **Create new dist**
 ```
-npx webpack --config webpack.config.js
+npx webpack
 ```
 
 ## License

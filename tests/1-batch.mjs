@@ -2,9 +2,9 @@ import { MinaData } from './../src/MinaData.mjs'
 import fs from 'fs'
 
 
-const minaData = new MinaData()
-
-minaData.init( {} )
+const minaData = new MinaData( {
+    'networkName': 'berkeley'
+} )
 
 const presets = minaData
     .getPresets()
@@ -22,8 +22,7 @@ for( const key of presets ) {
 
     const result = await minaData.getData( { 
         'preset': key, 
-        userVars,
-        'network': 'berkeley'
+        userVars
     } )
 
     console.log( `${key}`)

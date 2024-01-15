@@ -1,15 +1,16 @@
 import { MinaData } from './../src/MinaData.mjs'
 
-const minaData = new MinaData()
-minaData.init( {} )
-
-const result = await minaData.getData( { 
-    'preset': 'transactionByHash', 
-    'userVars': {
-        'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
-    },
-    'network': 'berkeley'
+const minaData = new MinaData( {
+    'networkName': 'berkeley'
 } )
+
+const result = await minaData
+    .getData( { 
+        'preset': 'transactionByHash', 
+        'userVars': {
+            'hash': '5Ju7HSdjQcPpgzkjECVdmErhuri3VMLm2N7b4z2mB6kMbbKnFHx1'
+        }
+    } )
 
 try {
     const test = 'B62qmKTWum3TYe3HSDKCK6NWkMhNyjPJbwCD6HuD3ypvSWw5drL8D1x'
