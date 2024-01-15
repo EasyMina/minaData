@@ -38,17 +38,14 @@ async function getFetch() {
 
 export class MinaData /*extends EventTarget*/ {
     #config
-    #debug
     #state
     #presets
     #provider
 
 
-    constructor( { debug=true, networkName, graphQl } ) {
+    constructor( { networkName, graphQl } ) {
         // super()
-        this.#debug = debug
         this.#config = config
-
         this.#init( { networkName, graphQl } )
 
         return true
@@ -322,8 +319,6 @@ export class MinaData /*extends EventTarget*/ {
 
 
     #preparePayload( { preset, userVars } ) {
-        this.#debug ? console.log( '' ) : ''
-
         const ps = this.getPreset( { 'key': preset } )
         const type = ps['input']['query']['schema']
 
